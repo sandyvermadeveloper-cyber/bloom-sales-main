@@ -106,6 +106,25 @@ export const formatLeadCurrency = (value?: number | null) => {
   }).format(value)
 }
 
+export const formatBudget = (
+  min?: number | null,
+  max?: number | null
+) => {
+  if (min !== null && min !== undefined && max !== null && max !== undefined) {
+    return `${formatLeadCurrency(min)} - ${formatLeadCurrency(max)}`
+  }
+
+  if (min !== null && min !== undefined) {
+    return `From ${formatLeadCurrency(min)}`
+  }
+
+  if (max !== null && max !== undefined) {
+    return `Up to ${formatLeadCurrency(max)}`
+  }
+
+  return "Not set"
+}
+
 export const leadToUpdateFormValues = (lead: Lead): LeadUpdateFormValues => ({
   title: lead.title ?? "",
   sourceId: lead.source?.id ?? "",

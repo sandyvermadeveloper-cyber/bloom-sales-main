@@ -38,6 +38,7 @@ import {
   leadStatusBadgeClasses,
 } from "@/components/leads/leads.constants"
 import {
+  formatBudget,
   formatLeadCurrency,
   formatLeadDate,
   getLeadApiMessage,
@@ -339,7 +340,7 @@ function LeadSummaryCard({ lead }: { lead: Lead }) {
         <InfoItem
           icon={WalletCards}
           label="Budget Range"
-          value={`${formatLeadCurrency(lead.budgetMin)} - ${formatLeadCurrency(lead.budgetMax)}`}
+          value={formatBudget(lead.budgetMin, lead.budgetMax)}
         />
         <InfoItem icon={Calendar} label="Expected Closing" value={formatLeadDate(lead.expectedClosingDate)} />
         <InfoItem icon={UserRound} label="Owner" value={getLeadOwnerName(lead)} />
