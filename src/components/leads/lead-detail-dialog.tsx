@@ -361,9 +361,9 @@ function LeadSummaryCard({ lead }: { lead: Lead }) {
   return (
     <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
       <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-start">
-        <div className="space-y-1.5">
-          <h2 className="text-base font-semibold leading-tight">{getLeadTitle(lead)}</h2>
-          <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+        <div className="min-w-0 space-y-1.5">
+          <h2 className="break-words text-base font-semibold leading-tight">{getLeadTitle(lead)}</h2>
+          <p className="max-w-2xl break-words text-sm leading-6 text-muted-foreground">
             {formatDescription(lead.summary || "No summary available.")}
           </p>
         </div>
@@ -546,7 +546,7 @@ function LeadNotesCard({
                 <NotebookText className="size-4" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="whitespace-pre-wrap text-sm font-medium">{note.content}</p>
+                <p className="whitespace-pre-wrap break-words text-sm font-medium">{note.content}</p>
                 <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <span>{[note.createdBy?.name, formatLeadDate(note.createdAt)].filter(Boolean).join(" · ")}</span>
                   {note.visibility ? (
@@ -639,15 +639,15 @@ function LeadAttachmentsCard({
             <div key={attachment.id} className="flex items-center gap-3 p-3 transition hover:bg-muted/50">
               <button
                 type="button"
-                className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                className="flex min-w-0 flex-1 items-start gap-3 text-left"
                 onClick={() => onView(attachment)}
               >
                 <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <Paperclip className="size-4" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{attachment.fileName}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="line-clamp-2 break-all text-sm font-medium">{attachment.fileName}</p>
+                  <p className="break-words text-xs text-muted-foreground">
                     {[formatFileSize(attachment.fileSize), attachment.mimeType, formatLeadDate(attachment.createdAt)]
                       .filter(Boolean)
                       .join(" · ")}
@@ -729,9 +729,9 @@ function LeadActivitiesCard({
                 </span>
                 {index < activities.length - 1 ? <span className="h-full w-px bg-border" /> : null}
               </div>
-              <div className="pb-3">
-                <p className="text-sm font-medium">{formatActivityType(activity.type)}</p>
-                <p className="text-xs text-muted-foreground">
+              <div className="min-w-0 flex-1 pb-3">
+                <p className="break-words text-sm font-medium">{formatActivityType(activity.type)}</p>
+                <p className="break-words text-xs text-muted-foreground">
                   {[activity.performedBy?.name, formatLeadDate(activity.createdAt)].filter(Boolean).join(" · ")}
                 </p>
               </div>
@@ -1670,9 +1670,9 @@ const formatFileSize = (value?: number) => {
 
 function MetadataItem({ label, value }: { label: string; value: string }) {
   return (
-    <div>
+    <div className="min-w-0">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-sm font-medium">{value}</p>
+      <p className="break-words text-sm font-medium">{value}</p>
     </div>
   )
 }

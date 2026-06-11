@@ -61,15 +61,22 @@ export function LeadsFilters({
   onReset,
 }: LeadsFiltersProps) {
   return (
-    <div className="grid gap-3 lg:grid-cols-[minmax(260px,1fr)_150px_150px_170px] xl:grid-cols-[minmax(280px,1fr)_150px_150px_170px_170px_170px_auto]">
-      <div className="relative">
+    <div
+      className="
+        grid grid-cols-2 gap-3
+        sm:grid-cols-3
+        lg:grid-cols-6
+        xl:grid-cols-[minmax(220px,1fr)_150px_150px_150px_150px_150px_auto]
+      "
+    >
+      <div className="relative col-span-2 sm:col-span-3 lg:col-span-6 xl:col-span-1">
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={searchDraft}
           onChange={(event) => onSearchDraftChange(event.target.value)}
-          placeholder="Search by title, contact, email, phone..."
+          placeholder="Search by Lead-Id, Title"
           aria-label="Search leads"
-          className="pl-9"
+          className="h-10 pl-9"
         />
       </div>
 
@@ -146,9 +153,14 @@ export function LeadsFilters({
         </SelectContent>
       </Select>
 
-      <Button type="button" className="h-10" variant="outline" onClick={onReset}>
-        <RotateCcw className="size-4" />
-        Reset
+      <Button
+        type="button"
+        variant="outline"
+        className="h-10 w-full gap-2 lg:px-0 xl:w-10"
+        onClick={onReset}
+      >
+        <RotateCcw className="size-4 shrink-0" />
+        <span className="lg:sr-only">Reset filters</span>
       </Button>
     </div>
   )

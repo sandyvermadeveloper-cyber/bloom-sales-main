@@ -267,7 +267,7 @@ function ContactsPageContent() {
       </div>
 
       <Card>
-        <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <CardHeader className="flex  gap-2 sm:flex-row sm:items-center justify-between">
           <CardTitle>Contacts</CardTitle>
           {pagination ? (
             <p className="text-sm text-muted-foreground">

@@ -223,7 +223,7 @@ function LeadSourcesPageContent() {
 
   return (
     <section className="page-section">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex gap-4 sm:flex-row sm:items-start justify-between">
         <div className="page-header">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">Lead Sources</h1>
           <p className="text-sm text-muted-foreground">
@@ -237,7 +237,7 @@ function LeadSourcesPageContent() {
       </div>
 
       <Card>
-        <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <CardHeader className="flex gap-2 sm:flex-row sm:items-center justify-between">
           <CardTitle>Lead Sources</CardTitle>
           {pagination ? (
             <p className="text-sm text-muted-foreground">
