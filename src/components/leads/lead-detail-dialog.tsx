@@ -8,6 +8,7 @@ import {
   FileText,
   Globe2,
   Loader2,
+  Lock,
   Mail,
   MoreHorizontal,
   NotebookText,
@@ -16,6 +17,7 @@ import {
   Phone,
   Plus,
   Trash2,
+  Users,
   UserMinus,
   UserRound,
   WalletCards,
@@ -75,12 +77,26 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import type { ContactProfileFormValues } from "@/schemas/contact.schemas"
-import type { Lead, LeadActivity, LeadAttachment, LeadContact, LeadNewContactLinkInput, LeadNote } from "@/types/lead"
+import type {
+  Lead,
+  LeadActivity,
+  LeadAttachment,
+  LeadContact,
+  LeadNewContactLinkInput,
+  LeadNote,
+} from "@/types/lead"
 import {
   formatDescription,
   formatDesignation,
@@ -100,6 +116,8 @@ export function LeadDetailDialog({ leadId, open, onOpenChange }: LeadDetailDialo
   const queryClient = useQueryClient()
   const [serviceOpen, setServiceOpen] = useState(false)
   const [noteOpen, setNoteOpen] = useState(false)
+  const [editNote, setEditNote] = useState<LeadNote | null>(null)
+  const [deleteNoteTarget, setDeleteNoteTarget] = useState<LeadNote | null>(null)
   const [attachmentOpen, setAttachmentOpen] = useState(false)
   const [viewAttachment, setViewAttachment] = useState<LeadAttachment | null>(null)
   const [deleteAttachment, setDeleteAttachment] = useState<LeadAttachment | null>(null)
@@ -197,6 +215,8 @@ export function LeadDetailDialog({ leadId, open, onOpenChange }: LeadDetailDialo
                 error={notesQuery.error}
                 onRetry={() => notesQuery.refetch()}
                 onAdd={() => setNoteOpen(true)}
+                onEdit={setEditNote}
+                onDelete={setDeleteNoteTarget}
               />
               <LeadAttachmentsCard
                 attachments={attachmentsQuery.data?.data ?? []}
@@ -236,6 +256,30 @@ export function LeadDetailDialog({ leadId, open, onOpenChange }: LeadDetailDialo
           onOpenChange={setNoteOpen}
           onSuccess={() => {
             setNoteOpen(false)
+            void queryClient.invalidateQueries({ queryKey: ["leads", "notes", leadId] })
+            invalidateActivities()
+          }}
+        />
+        <EditLeadNoteDialog
+          note={editNote}
+          open={Boolean(editNote)}
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) setEditNote(null)
+          }}
+          onSuccess={() => {
+            setEditNote(null)
+            void queryClient.invalidateQueries({ queryKey: ["leads", "notes", leadId] })
+            invalidateActivities()
+          }}
+        />
+        <DeleteLeadNoteDialog
+          note={deleteNoteTarget}
+          open={Boolean(deleteNoteTarget)}
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) setDeleteNoteTarget(null)
+          }}
+          onSuccess={() => {
+            setDeleteNoteTarget(null)
             void queryClient.invalidateQueries({ queryKey: ["leads", "notes", leadId] })
             invalidateActivities()
           }}
@@ -473,6 +517,8 @@ function LeadNotesCard({
   error,
   onRetry,
   onAdd,
+  onEdit,
+  onDelete,
 }: {
   notes: LeadNote[]
   isLoading: boolean
@@ -480,6 +526,8 @@ function LeadNotesCard({
   error: unknown
   onRetry: () => void
   onAdd: () => void
+  onEdit: (note: LeadNote) => void
+  onDelete: (note: LeadNote) => void
 }) {
   return (
     <DetailSection title="Notes" actionLabel="Add Note" onAdd={onAdd}>
@@ -493,16 +541,61 @@ function LeadNotesCard({
       {!isLoading && !isError && notes.length ? (
         <div className="space-y-2">
           {notes.map((note) => (
-            <div key={note.id} className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 p-3">
+            <div key={note.id} className="flex items-start gap-3 rounded-lg border border-border/70 bg-muted/30 p-3">
               <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <NotebookText className="size-4" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="line-clamp-2 text-sm font-medium">{note.content}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {[note.createdBy?.name, formatLeadDate(note.createdAt)].filter(Boolean).join(" · ")}
-                </p>
+                <p className="whitespace-pre-wrap text-sm font-medium">{note.content}</p>
+                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <span>{[note.createdBy?.name, formatLeadDate(note.createdAt)].filter(Boolean).join(" · ")}</span>
+                  {note.visibility ? (
+                    <Badge variant="outline" className="h-5 gap-1 rounded-full px-2 text-[10px] font-medium">
+                      {note.visibility === "PRIVATE" ? (
+                        <Lock className="size-3" />
+                      ) : (
+                        <Users className="size-3" />
+                      )}
+                      {formatTitleCase(note.visibility)}
+                    </Badge>
+                  ) : null}
+                </div>
               </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="shrink-0"
+                    aria-label="Open note actions"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <MoreHorizontal className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onSelect={(event) => {
+                      event.preventDefault()
+                      onEdit(note)
+                    }}
+                  >
+                    <Pencil className="size-4" />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-destructive"
+                    onSelect={(event) => {
+                      event.preventDefault()
+                      onDelete(note)
+                    }}
+                  >
+                    <Trash2 className="size-4" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           ))}
         </div>
@@ -763,7 +856,13 @@ function AddLeadServiceDialog({
 
 const noteSchema = z.object({
   content: z.string().trim().min(1, "Note is required"),
+  visibility: z.enum(["TEAM", "PRIVATE"]),
 })
+
+const noteVisibilityOptions: Array<{ value: "TEAM" | "PRIVATE"; label: string; icon: typeof Users }> = [
+  { value: "TEAM", label: "Team", icon: Users },
+  { value: "PRIVATE", label: "Private", icon: Lock },
+]
 
 function AddLeadNoteDialog({
   open,
@@ -779,7 +878,7 @@ function AddLeadNoteDialog({
   const [message, setMessage] = useState<string | null>(null)
   const form = useForm<z.infer<typeof noteSchema>>({
     resolver: zodResolver(noteSchema),
-    defaultValues: { content: "" },
+    defaultValues: { content: "", visibility: "TEAM" },
   })
   const mutation = useMutation({
     mutationFn: (values: z.infer<typeof noteSchema>) => {
@@ -789,7 +888,7 @@ function AddLeadNoteDialog({
         resourceType: "LEAD",
         resourceId: leadId,
         content: values.content,
-        visibility: "TEAM",
+        visibility: values.visibility,
       })
     },
     onSuccess,
@@ -798,7 +897,7 @@ function AddLeadNoteDialog({
 
   useEffect(() => {
     if (!open) return
-    form.reset({ content: "" })
+    form.reset({ content: "", visibility: "TEAM" })
     const timeoutId = window.setTimeout(() => setMessage(null), 0)
 
     return () => window.clearTimeout(timeoutId)
@@ -809,7 +908,7 @@ function AddLeadNoteDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add Note</DialogTitle>
-          <DialogDescription>Add a team-visible note to this lead.</DialogDescription>
+          <DialogDescription>Add a note to this lead.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form className="space-y-4" onSubmit={form.handleSubmit((values) => mutation.mutate(values))}>
@@ -823,6 +922,31 @@ function AddLeadNoteDialog({
                   <FormControl className="mt-2">
                     <Textarea rows={5} placeholder="Write note..." disabled={mutation.isPending} {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="visibility"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Visibility</FormLabel>
+                  <Select disabled={mutation.isPending} value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger className="h-9 w-full">
+                        <SelectValue placeholder="Select visibility" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {noteVisibilityOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          <option.icon className="size-3.5" />
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -1032,6 +1156,163 @@ function AttachmentDeleteDialog({
           <DialogDescription>
             This will remove {attachment?.fileName ? `"${attachment.fileName}"` : "this attachment"} from the lead.
           </DialogDescription>
+        </DialogHeader>
+
+        {message ? <Alert variant="destructive">{message}</Alert> : null}
+
+        <DialogFooter>
+          <Button type="button" variant="outline" disabled={mutation.isPending} onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button type="button" variant="destructive" disabled={mutation.isPending} onClick={() => mutation.mutate()}>
+            {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+            Delete
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function EditLeadNoteDialog({
+  note,
+  open,
+  onOpenChange,
+  onSuccess,
+}: {
+  note: LeadNote | null
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onSuccess: () => void
+}) {
+  const [message, setMessage] = useState<string | null>(null)
+  const form = useForm<z.infer<typeof noteSchema>>({
+    resolver: zodResolver(noteSchema),
+    defaultValues: { content: "", visibility: "TEAM" },
+  })
+  const mutation = useMutation({
+    mutationFn: (values: z.infer<typeof noteSchema>) => {
+      if (!note) throw new Error("Note is required.")
+
+      return leadsApi.updateNote(note.id, {
+        content: values.content,
+        visibility: values.visibility,
+      })
+    },
+    onSuccess,
+    onError: (error) => setMessage(getLeadApiMessage(error, "Unable to update note.")),
+  })
+
+  useEffect(() => {
+    if (!open || !note) return
+    form.reset({
+      content: note.content ?? "",
+      visibility: note.visibility === "PRIVATE" ? "PRIVATE" : "TEAM",
+    })
+    const timeoutId = window.setTimeout(() => setMessage(null), 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [form, note, open])
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit Note</DialogTitle>
+          <DialogDescription>Update the note content or visibility.</DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form className="space-y-4" onSubmit={form.handleSubmit((values) => mutation.mutate(values))}>
+            {message ? <Alert variant="destructive">{message}</Alert> : null}
+            <FormField
+              control={form.control}
+              name="content"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Note</FormLabel>
+                  <FormControl className="mt-2">
+                    <Textarea rows={5} placeholder="Write note..." disabled={mutation.isPending} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="visibility"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Visibility</FormLabel>
+                  <Select disabled={mutation.isPending} value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger className="h-9 w-full">
+                        <SelectValue placeholder="Select visibility" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {noteVisibilityOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          <option.icon className="size-3.5" />
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DialogFooter>
+              <Button type="button" variant="outline" disabled={mutation.isPending} onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={mutation.isPending}>
+                {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+                Save changes
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function DeleteLeadNoteDialog({
+  note,
+  open,
+  onOpenChange,
+  onSuccess,
+}: {
+  note: LeadNote | null
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onSuccess: () => void
+}) {
+  const [message, setMessage] = useState<string | null>(null)
+  const mutation = useMutation({
+    mutationFn: () => {
+      if (!note) throw new Error("Note is required.")
+
+      return leadsApi.deleteNote(note.id)
+    },
+    onSuccess,
+    onError: (error) => setMessage(getLeadApiMessage(error, "Unable to delete note.")),
+  })
+
+  useEffect(() => {
+    if (!open) return
+    const timeoutId = window.setTimeout(() => setMessage(null), 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [open])
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Delete note?</DialogTitle>
+          <DialogDescription>This will remove this note from the lead.</DialogDescription>
         </DialogHeader>
 
         {message ? <Alert variant="destructive">{message}</Alert> : null}

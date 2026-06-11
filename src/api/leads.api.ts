@@ -10,6 +10,7 @@ import type {
   LeadData,
   LeadNote,
   LeadNoteInput,
+  LeadNoteUpdateInput,
   LeadServiceLinkInput,
   LeadStatusChangeInput,
   ListLeadsData,
@@ -203,6 +204,21 @@ export const leadsApi = {
 
   async createNote(input: LeadNoteInput) {
     const response = await apiClient.post<ApiSuccess<LeadNote>>("/api/v1/notes", input)
+
+    return response.data
+  },
+
+  async updateNote(noteId: string, input: LeadNoteUpdateInput) {
+    const response = await apiClient.patch<ApiSuccess<{ id: string }>>(
+      `/api/v1/notes/${noteId}`,
+      input
+    )
+
+    return response.data
+  },
+
+  async deleteNote(noteId: string) {
+    const response = await apiClient.delete<ApiSuccess<null>>(`/api/v1/notes/${noteId}`)
 
     return response.data
   },

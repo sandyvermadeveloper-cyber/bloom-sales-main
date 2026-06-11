@@ -159,6 +159,11 @@ export type LeadNoteInput = {
   visibility: "TEAM" | "PRIVATE"
 }
 
+export type LeadNoteUpdateInput = {
+  content?: string
+  visibility?: "TEAM" | "PRIVATE"
+}
+
 export type LeadAttachment = {
   id: string
   fileName: string
