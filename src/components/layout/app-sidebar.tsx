@@ -1,6 +1,6 @@
 "use client"
 
-import { BookUser, LayoutDashboard, MapPin, Settings, ShoppingBag, Target, User, Users, Wrench } from "lucide-react"
+import { BookUser, Building2, LayoutDashboard, MapPin, Settings, ShoppingBag, Target, User, Users, Wrench } from "lucide-react"
 import Link from "next/link"
 import { memo } from "react"
 
@@ -33,6 +33,11 @@ const navigationItems: SidebarNavItem[] = [
     title: "Contacts",
     href: "/contacts",
     icon: BookUser,
+  },
+  {
+    title: "Customers",
+    href: "/customers",
+    icon: Building2,
   },
   {
     title: "Services",

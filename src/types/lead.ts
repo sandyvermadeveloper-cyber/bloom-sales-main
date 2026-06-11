@@ -5,9 +5,9 @@ import type { ContactEmail, ContactLabel, ContactPhone } from "@/types/contact"
 export type LeadStatus =
   | "NEW"
   | "CONTACTED"
-  | "IN_PROGRESS"
   | "QUALIFIED"
-  | "PROPOSAL"
+  | "PROPOSAL_SENT"
+  | "NEGOTIATION"
   | "WON"
   | "LOST"
 
