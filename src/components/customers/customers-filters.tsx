@@ -30,15 +30,15 @@ export function CustomersFilters({
   onReset,
 }: CustomersFiltersProps) {
   return (
-    <div className="grid gap-3 lg:grid-cols-[minmax(260px,1fr)_180px_auto]">
-      <div className="relative">
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-[minmax(260px,1fr)_180px_auto]">
+      <div className="relative col-span-2 lg:col-span-1">
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={searchDraft}
           onChange={(event) => onSearchDraftChange(event.target.value)}
           placeholder="Search by name, contact, email, phone..."
           aria-label="Search customers"
-          className="pl-9"
+          className="h-10 pl-9"
         />
       </div>
 
@@ -56,7 +56,7 @@ export function CustomersFilters({
         </SelectContent>
       </Select>
 
-      <Button type="button" className="h-10" variant="outline" onClick={onReset}>
+      <Button type="button" className="h-10 w-full lg:w-auto" variant="outline" onClick={onReset}>
         <RotateCcw className="size-4" />
         Reset
       </Button>

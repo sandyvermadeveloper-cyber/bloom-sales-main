@@ -17,17 +17,18 @@ export function ServicesFilters({
   onReset,
 }: ServicesFiltersProps) {
   return (
-    <div className="grid gap-3 lg:grid-cols-[minmax(220px,1fr)_auto]">
+    <div className="flex items-center gap-3">
       <Input
         value={searchDraft}
         onChange={(event) => onSearchDraftChange(event.target.value)}
         placeholder="Search services"
         aria-label="Search services"
+        className="h-10 flex-1"
       />
 
-      <Button type="button" className="h-10" variant="outline" onClick={onReset}>
+      <Button type="button" className="h-10 px-3 shrink-0" variant="outline" onClick={onReset}>
         <RotateCcw className="size-4" />
-        Reset
+        <span className="hidden sm:inline">Reset</span>
       </Button>
     </div>
   )

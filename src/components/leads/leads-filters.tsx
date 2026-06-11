@@ -160,7 +160,8 @@ export function LeadsFilters({
         onClick={onReset}
       >
         <RotateCcw className="size-4 shrink-0" />
-        <span className="lg:sr-only">Reset filters</span>
+        Reset
+        {/* <span className="lg:sr-only">Reset filters</span> */}
       </Button>
     </div>
   )

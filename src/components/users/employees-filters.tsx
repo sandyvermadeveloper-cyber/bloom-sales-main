@@ -35,13 +35,16 @@ export function EmployeesFilters({
   onReset,
 }: EmployeesFiltersProps) {
   return (
-    <div className="grid gap-3 lg:grid-cols-[minmax(220px,1fr)_160px_160px_auto]">
-      <div>
+    <div className=" grid gap-3
+    grid-cols-2
+    md:grid-cols-[minmax(250px,1fr)_160px_160px_auto]">
+      <div className="col-span-2 md:col-span-1">
         <Input
           value={searchDraft}
           onChange={(event) => onSearchDraftChange(event.target.value)}
           placeholder="Search employees"
           aria-label="Search employees"
+          className="h-10 "
         />
       </div>
 
@@ -73,7 +76,12 @@ export function EmployeesFilters({
         </SelectContent>
       </Select>
 
-      <Button type="button" variant="outline" onClick={onReset} className=" h-10 ">
+      <Button
+        type="button"
+        variant="outline"
+        onClick={onReset}
+        className="col-span-2 h-10 w-full md:col-span-1 md:w-auto"
+      >
         <RotateCcw className="size-4" />
         Reset
       </Button>
