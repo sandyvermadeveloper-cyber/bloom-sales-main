@@ -1,5 +1,6 @@
 import { z } from "zod"
 
+import { customerTypes } from "@/components/customers/customers.constants"
 import { leadPriorities, leadQualifications, leadStatuses } from "@/components/leads/leads.constants"
 import { e164PhoneSchema } from "@/schemas/phone.schemas"
 
@@ -86,3 +87,9 @@ export const leadStatusChangeSchema = z.object({
 })
 
 export type LeadStatusChangeFormValues = z.infer<typeof leadStatusChangeSchema>
+
+export const leadConvertSchema = z.object({
+  customerType: z.enum(customerTypes),
+})
+
+export type LeadConvertFormValues = z.infer<typeof leadConvertSchema>

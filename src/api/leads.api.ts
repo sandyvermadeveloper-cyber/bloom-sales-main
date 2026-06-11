@@ -6,6 +6,7 @@ import type {
   LeadActivity,
   LeadAttachment,
   LeadAttachmentInput,
+  LeadConvertInput,
   LeadContactLinkInput,
   LeadData,
   LeadNote,
@@ -159,6 +160,15 @@ export const leadsApi = {
   async changeStatus(leadId: string, input: LeadStatusChangeInput) {
     const response = await apiClient.post<ApiSuccess<LeadData>>(
       `/api/v1/leads/${leadId}/change-status`,
+      input
+    )
+
+    return response.data
+  },
+
+  async convert(leadId: string, input: LeadConvertInput) {
+    const response = await apiClient.post<ApiSuccess<LeadData>>(
+      `/api/v1/leads/${leadId}/convert`,
       input
     )
 

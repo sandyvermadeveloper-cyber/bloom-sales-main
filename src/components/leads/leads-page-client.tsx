@@ -8,7 +8,9 @@ import { Suspense, useEffect, useMemo, useState } from "react"
 import { leadSourcesApi } from "@/api/lead-sources.api"
 import { leadsApi } from "@/api/leads.api"
 import { servicesApi } from "@/api/services.api"
+import { TableRefetchButton } from "@/components/shared/table-refetch-button"
 import { LeadConfirmDialog } from "@/components/leads/lead-confirm-dialog"
+import { LeadConvertDialog } from "@/components/leads/lead-convert-dialog"
 import { LeadDetailDialog } from "@/components/leads/lead-detail-dialog"
 import { LeadDialog } from "@/components/leads/lead-dialog"
 import { LeadEditDialog } from "@/components/leads/lead-edit-dialog"
@@ -32,6 +34,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import type {
+  LeadConvertFormValues,
   LeadFormValues,
   LeadStatusChangeFormValues,
   LeadUpdateFormValues,
@@ -63,6 +66,7 @@ function LeadsPageContent() {
   const [editLead, setEditLead] = useState<Lead | null>(null)
   const [viewLead, setViewLead] = useState<Lead | null>(null)
   const [statusLead, setStatusLead] = useState<Lead | null>(null)
+  const [convertLead, setConvertLead] = useState<Lead | null>(null)
   const [deleteLead, setDeleteLead] = useState<Lead | null>(null)
   const [restoreLead, setRestoreLead] = useState<Lead | null>(null)
   const [dialogMessage, setDialogMessage] = useState<string | null>(null)
@@ -147,6 +151,10 @@ function LeadsPageContent() {
 
   const invalidateLeads = () => {
     void queryClient.invalidateQueries({ queryKey: ["leads"] })
+  }
+
+  const invalidateCustomers = () => {
+    void queryClient.invalidateQueries({ queryKey: ["customers"] })
   }
 
   const createMutation = useMutation({
@@ -255,6 +263,24 @@ function LeadsPageContent() {
     },
   })
 
+  const convertMutation = useMutation({
+    mutationFn: (values: LeadConvertFormValues) => {
+      if (!convertLead) throw new Error("Lead is required to convert.")
+
+      return leadsApi.convert(convertLead.id, values)
+    },
+    onSuccess: (response) => {
+      setConvertLead(null)
+      setDialogMessage(null)
+      setPageMessage(response.message)
+      invalidateLeads()
+      invalidateCustomers()
+    },
+    onError: (error) => {
+      setDialogMessage(getLeadApiMessage(error, "Unable to convert lead. Please try again."))
+    },
+  })
+
   const resetFilters = () => {
     setPage(1)
     setLimit(defaultLeadPageSize)
@@ -295,6 +321,13 @@ function LeadsPageContent() {
     setStatusLead(lead)
   }
 
+  const openConvertDialog = (lead: Lead) => {
+    convertMutation.reset()
+    setDialogMessage(null)
+    setPageMessage(null)
+    setConvertLead(lead)
+  }
+
   const openDeleteDialog = (lead: Lead) => {
     deleteMutation.reset()
     resetDialogState()
@@ -324,6 +357,12 @@ function LeadsPageContent() {
     setDialogMessage(null)
   }
 
+  const closeConvertDialog = (open: boolean) => {
+    if (open || convertMutation.isPending) return
+    setConvertLead(null)
+    setDialogMessage(null)
+  }
+
   const closeDeleteDialog = (open: boolean) => {
     if (open || deleteMutation.isPending) return
     setDeleteLead(null)
@@ -345,10 +384,13 @@ function LeadsPageContent() {
             Manage incoming sales opportunities, sources, services, and primary contacts.
           </p>
         </div>
-        <Button onClick={openCreateDialog} className="h-10">
-          <Target className="size-4" />
-          Add lead
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <TableRefetchButton isFetching={leadsQuery.isFetching} onRefetch={() => leadsQuery.refetch()} />
+          <Button onClick={openCreateDialog} className="h-10">
+            <Target className="size-4" />
+            Add lead
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -420,6 +462,7 @@ function LeadsPageContent() {
             onEdit={openEditDialog}
             onView={openViewDialog}
             onChangeStatus={openStatusDialog}
+            onConvert={openConvertDialog}
             onDelete={openDeleteDialog}
             onRestore={openRestoreDialog}
           />
@@ -476,6 +519,19 @@ function LeadsPageContent() {
         onSubmit={(values) => {
           setDialogMessage(null)
           statusMutation.mutate(values)
+        }}
+      />
+
+      <LeadConvertDialog
+        open={Boolean(convertLead)}
+        lead={convertLead}
+        isPending={convertMutation.isPending}
+        error={convertMutation.error}
+        message={dialogMessage}
+        onOpenChange={closeConvertDialog}
+        onSubmit={(values) => {
+          setDialogMessage(null)
+          convertMutation.mutate(values)
         }}
       />
 

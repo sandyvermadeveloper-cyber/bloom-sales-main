@@ -53,6 +53,7 @@ type LeadsTableProps = {
   onEdit: (lead: Lead) => void
   onView: (lead: Lead) => void
   onChangeStatus: (lead: Lead) => void
+  onConvert: (lead: Lead) => void
   onDelete: (lead: Lead) => void
   onRestore: (lead: Lead) => void
 }
@@ -73,6 +74,7 @@ export function LeadsTable({
   onEdit,
   onView,
   onChangeStatus,
+  onConvert,
   onDelete,
   onRestore,
 }: LeadsTableProps) {
@@ -316,6 +318,7 @@ export function LeadsTable({
                     onEdit={onEdit}
                     onView={onView}
                     onChangeStatus={onChangeStatus}
+                    onConvert={onConvert}
                     onDelete={onDelete}
                     onRestore={onRestore}
                   />

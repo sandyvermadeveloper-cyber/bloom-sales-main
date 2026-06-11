@@ -1,6 +1,7 @@
 import type { LeadSource } from "@/types/lead-source"
 import type { Service } from "@/types/service"
 import type { ContactEmail, ContactLabel, ContactPhone } from "@/types/contact"
+import type { CustomerType } from "@/types/customer"
 
 export type LeadStatus =
   | "NEW"
@@ -8,7 +9,6 @@ export type LeadStatus =
   | "QUALIFIED"
   | "PROPOSAL_SENT"
   | "NEGOTIATION"
-  | "WON"
   | "LOST"
 
 export type LeadPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT"
@@ -134,6 +134,10 @@ export type LeadServiceLinkInput = {
 
 export type LeadStatusChangeInput = {
   status: LeadStatus
+}
+
+export type LeadConvertInput = {
+  customerType: CustomerType
 }
 
 export type LeadActivity = {

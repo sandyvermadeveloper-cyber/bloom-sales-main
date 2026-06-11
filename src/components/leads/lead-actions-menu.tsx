@@ -1,6 +1,6 @@
 "use client"
 
-import { CircleDot, Eye, MoreHorizontal, Pencil, RotateCcw, Trash2 } from "lucide-react"
+import { CircleDot, Eye, MoreHorizontal, Pencil, RotateCcw, Send, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -16,6 +16,7 @@ type LeadActionsMenuProps = {
   onEdit: (lead: Lead) => void
   onView: (lead: Lead) => void
   onChangeStatus: (lead: Lead) => void
+  onConvert: (lead: Lead) => void
   onDelete: (lead: Lead) => void
   onRestore: (lead: Lead) => void
 }
@@ -25,10 +26,12 @@ export function LeadActionsMenu({
   onEdit,
   onView,
   onChangeStatus,
+  onConvert,
   onDelete,
   onRestore,
 }: LeadActionsMenuProps) {
   const isDeleted = Boolean(lead.deletedAt)
+  const isConverted = lead.status === "WON"
 
   return (
     <DropdownMenu>
@@ -53,6 +56,12 @@ export function LeadActionsMenu({
               <CircleDot className="size-4" />
               Change status
             </DropdownMenuItem>
+            {!isConverted ? (
+              <DropdownMenuItem onSelect={() => onConvert(lead)}>
+                <Send className="size-4" />
+                Convert
+              </DropdownMenuItem>
+            ) : null}
           </>
         ) : null}
 

@@ -125,12 +125,8 @@ export function ContactsTable({
                     </TableCell>
                     <TableCell>
                       <div className="flex min-w-0 items-center gap-3">
-                        {/* <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xs font-semibold text-primary">
-                          {getContactInitials(contact)}
-                        </span> */}
                         <div className="min-w-0">
                           <p className="truncate font-semibold text-foreground">{getContactName(contact)}</p>
-                          {/* <p className="truncate text-xs text-muted-foreground">{formatCode(contact.id)}</p> */}
                         </div>
                       </div>
                     </TableCell>
@@ -143,14 +139,6 @@ export function ContactsTable({
                     <TableCell>
                       <span className="text-sm text-muted-foreground">{formatEmail(contact.primaryEmail)}</span>
                     </TableCell>
-                    {/* <TableCell>
-                      <Badge variant="secondary">{contact.relatedLeads?.length ?? 0}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">
-                        {Array.isArray(contact.relatedCustomers) ? contact.relatedCustomers.length : 0}
-                      </Badge>
-                    </TableCell> */}
                     <TableCell>
                       <span className="text-sm text-muted-foreground">
                         {formatContactDate(contact.updatedAt || contact.createdAt)}

@@ -12,7 +12,6 @@ export const leadStatuses = [
   "QUALIFIED",
   "PROPOSAL_SENT",
   "NEGOTIATION",
-  "WON",
   "LOST",
 ] as const
 

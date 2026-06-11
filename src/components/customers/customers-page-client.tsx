@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useMemo, useState } from "react"
 
 import { customersApi } from "@/api/customers.api"
+import { TableRefetchButton } from "@/components/shared/table-refetch-button"
 import { CustomerAssignDialog } from "@/components/customers/customer-assign-dialog"
 import { CustomerConfirmDialog } from "@/components/customers/customer-confirm-dialog"
 import { CustomerDetailDialog } from "@/components/customers/customer-detail-dialog"
@@ -332,10 +333,13 @@ function CustomersPageContent() {
             Manage customer accounts, ownership, contacts, and account status.
           </p>
         </div>
-        <Button onClick={openCreateDialog} className="h-10">
-          <Building2 className="size-4" />
-          Add customer
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <TableRefetchButton isFetching={customersQuery.isFetching} onRefetch={() => customersQuery.refetch()} />
+          <Button onClick={openCreateDialog} className="h-10">
+            <Building2 className="size-4" />
+            Add customer
+          </Button>
+        </div>
       </div>
 
       <Card>

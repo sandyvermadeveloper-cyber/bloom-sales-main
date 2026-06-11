@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useMemo, useState } from "react"
 
 import { servicesApi } from "@/api/services.api"
+import { TableRefetchButton } from "@/components/shared/table-refetch-button"
 import { Alert } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -225,10 +226,13 @@ function ServicesPageContent() {
             Manage CRM services used across leads and customer workflows.
           </p>
         </div>
-        <Button onClick={openCreateDialog} className=" h-10">
-          <Wrench className="size-4" />
-          Add service
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <TableRefetchButton isFetching={servicesQuery.isFetching} onRefetch={() => servicesQuery.refetch()} />
+          <Button onClick={openCreateDialog} className=" h-10">
+            <Wrench className="size-4" />
+            Add service
+          </Button>
+        </div>
       </div>
 
       <Card>

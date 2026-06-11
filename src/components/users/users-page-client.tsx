@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useMemo, useState } from "react"
 
 import { adminEmployeesApi } from "@/api/employees.api"
+import { TableRefetchButton } from "@/components/shared/table-refetch-button"
 import { Alert } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -302,10 +303,13 @@ function UsersPageContent() {
             Manage employees, invitations, roles, and account status.
           </p>
         </div>
-        <Button onClick={openCreateDialog} className=" h-10">
-          <UserPlus className="size-4" />
-          Add employee
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <TableRefetchButton isFetching={employeesQuery.isFetching} onRefetch={() => employeesQuery.refetch()} />
+          <Button onClick={openCreateDialog} className=" h-10">
+            <UserPlus className="size-4" />
+            Add employee
+          </Button>
+        </div>
       </div>
 
       <Card>

@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useMemo, useState } from "react"
 
 import { contactsApi } from "@/api/contacts.api"
+import { TableRefetchButton } from "@/components/shared/table-refetch-button"
 import { Alert } from "@/components/ui/alert"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -259,11 +260,14 @@ function ContactsPageContent() {
 
   return (
     <section className="page-section">
-      <div className="page-header">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Contacts</h1>
-        <p className="text-sm text-muted-foreground">
-          Manage CRM contacts, phones, emails, and linked records.
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="page-header">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Contacts</h1>
+          <p className="text-sm text-muted-foreground">
+            Manage CRM contacts, phones, emails, and linked records.
+          </p>
+        </div>
+        <TableRefetchButton isFetching={contactsQuery.isFetching} onRefetch={() => contactsQuery.refetch()} />
       </div>
 
       <Card>

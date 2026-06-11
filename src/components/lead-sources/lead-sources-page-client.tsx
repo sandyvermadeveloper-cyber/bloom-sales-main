@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useMemo, useState } from "react"
 
 import { leadSourcesApi } from "@/api/lead-sources.api"
+import { TableRefetchButton } from "@/components/shared/table-refetch-button"
 import { LeadSourceConfirmDialog } from "@/components/lead-sources/lead-source-confirm-dialog"
 import { LeadSourceDialog } from "@/components/lead-sources/lead-source-dialog"
 import {
@@ -230,10 +231,13 @@ function LeadSourcesPageContent() {
             Manage lead source options used for customer acquisition tracking.
           </p>
         </div>
-        <Button onClick={openCreateDialog} className="h-10">
-          <MapPin className="size-4" />
-          Add lead source
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <TableRefetchButton isFetching={leadSourcesQuery.isFetching} onRefetch={() => leadSourcesQuery.refetch()} />
+          <Button onClick={openCreateDialog} className="h-10">
+            <MapPin className="size-4" />
+            Add lead source
+          </Button>
+        </div>
       </div>
 
       <Card>

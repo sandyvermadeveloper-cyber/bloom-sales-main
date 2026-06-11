@@ -63,13 +63,12 @@ export function LeadsFilters({
   return (
     <div
       className="
-        grid grid-cols-2 gap-3
-        sm:grid-cols-3
-        lg:grid-cols-6
-        xl:grid-cols-[minmax(220px,1fr)_150px_150px_150px_150px_150px_auto]
+         grid grid-cols-2 gap-3
+    md:grid-cols-5
+    lg:grid-cols-6
       "
     >
-      <div className="relative col-span-2 sm:col-span-3 lg:col-span-6 xl:col-span-1">
+      <div className="relative col-span-2 md:col-span-5 lg:col-span-6">
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={searchDraft}
@@ -139,29 +138,14 @@ export function LeadsFilters({
         </SelectContent>
       </Select>
 
-      <Select value={serviceId} onValueChange={onServiceChange} disabled={isLoadingOptions}>
-        <SelectTrigger className="h-10 w-full">
-          <SelectValue placeholder="Service" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All services</SelectItem>
-          {services.map((service) => (
-            <SelectItem key={service.id} value={service.id}>
-              {service.label || service.name || service.id}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
       <Button
         type="button"
         variant="outline"
-        className="h-10 w-full gap-2 lg:px-0 xl:w-10"
+        className="h-10 w-full"
         onClick={onReset}
       >
-        <RotateCcw className="size-4 shrink-0" />
+        <RotateCcw className="size-4" />
         Reset
-        {/* <span className="lg:sr-only">Reset filters</span> */}
       </Button>
     </div>
   )

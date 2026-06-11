@@ -1435,7 +1435,7 @@ function AddLeadContactDialog({
             <div className="flex items-center justify-between gap-3 rounded-lg border border-border/70 bg-muted/30 p-3">
               <div className="space-y-0.5">
                 <p className="text-sm font-medium">Set as primary contact</p>
-                <p className="text-xs text-muted-foreground">This contact will be marked as the lead's primary contact.</p>
+                <p className="text-xs text-muted-foreground">This contact will be marked as the lead&apos;s primary contact.</p>
               </div>
               <Switch checked={isPrimary} onCheckedChange={setIsPrimary} disabled={mutation.isPending} />
             </div>
