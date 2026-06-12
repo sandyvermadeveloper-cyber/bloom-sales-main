@@ -1,7 +1,7 @@
 "use client"
 
 import { Loader2 } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
 import { getFollowUpLeadLabel } from "@/components/follow-ups/follow-ups.utils"
 import { Alert } from "@/components/ui/alert"
@@ -64,13 +64,14 @@ export function FollowUpConfirmDialog({
   const copy = modeCopy[mode]
   const showReason = mode === "cancel" || mode === "reopen"
 
-  useEffect(() => {
-    if (!open) return
-    setReason("")
-  }, [open])
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) setReason("")
+        onOpenChange(nextOpen)
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{copy.title}</DialogTitle>
@@ -104,7 +105,10 @@ export function FollowUpConfirmDialog({
             type="button"
             variant={copy.variant}
             disabled={isPending}
-            onClick={() => onConfirm(showReason ? reason.trim() || undefined : undefined)}
+            onClick={() => {
+              onConfirm(showReason ? reason.trim() || undefined : undefined)
+              if (!showReason) setReason("")
+            }}
           >
             {isPending ? <Loader2 className="size-4 animate-spin" /> : null}
             {copy.confirmLabel}

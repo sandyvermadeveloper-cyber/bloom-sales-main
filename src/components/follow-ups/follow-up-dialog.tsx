@@ -105,7 +105,6 @@ export function FollowUpDialog({
     if (!open) return
     form.clearErrors()
     form.reset({ ...defaultFollowUpValues, leadId: leadId ?? "" })
-    setLeadSearchDraft("")
   }, [form, leadId, open])
 
   useEffect(() => {
@@ -123,7 +122,13 @@ export function FollowUpDialog({
   }, [leadSearchDraft, onLeadSearchChange])
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) setLeadSearchDraft("")
+        onOpenChange(nextOpen)
+      }}
+    >
       <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Schedule Follow-Up</DialogTitle>

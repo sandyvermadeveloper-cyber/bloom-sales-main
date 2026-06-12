@@ -124,7 +124,7 @@ export const fromDateTimeInputValue = (value: string) => {
   return date.toISOString()
 }
 
-export const getClientTimezoneOffset = () => new Date().getTimezoneOffset() * -1
+export const getClientTimezoneOffset = () => new Date().getTimezoneOffset()
 
 export const followUpFormToCreateInput = (values: FollowUpFormValues): CreateFollowUpInput => ({
   leadId: values.leadId,

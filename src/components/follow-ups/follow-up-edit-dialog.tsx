@@ -7,7 +7,6 @@ import { useForm, useWatch } from "react-hook-form"
 
 import { SearchableSelect } from "@/components/leads/lead-searchable-select"
 import {
-  followUpFields,
   followUpTypeLabels,
   followUpTypes,
 } from "@/components/follow-ups/follow-ups.constants"
@@ -44,8 +43,10 @@ import {
   type FollowUpUpdateFormValues,
 } from "@/schemas/follow-up.schemas"
 import type { Employee } from "@/types/employee"
-import type { FollowUp } from "@/types/follow-up"
+import type { FollowUp, FollowUpType } from "@/types/follow-up"
 import { applyApiFieldErrors } from "@/utils/form-errors"
+
+const followUpEditFields = ["type", "customType", "scheduledAt", "notes", "assignedToEmployeeId"] as const
 
 const defaultValues: FollowUpUpdateFormValues = {
   type: "CALL",
@@ -98,10 +99,13 @@ export function FollowUpEditDialog({
 
   useEffect(() => {
     if (!open || !followUp) return
+    const followUpType = followUpTypes.includes(followUp.type as FollowUpType)
+      ? (followUp.type as FollowUpType)
+      : "CALL"
 
     form.clearErrors()
     form.reset({
-      type: followUp.type,
+      type: followUpType,
       customType: followUp.customType ?? "",
       scheduledAt: toDateTimeInputValue(followUp.scheduledAt),
       notes: followUp.notes ?? "",
@@ -110,7 +114,7 @@ export function FollowUpEditDialog({
   }, [followUp, form, open])
 
   useEffect(() => {
-    applyApiFieldErrors(error, form, followUpFields)
+    applyApiFieldErrors(error, form, followUpEditFields)
   }, [error, form])
 
   return (
