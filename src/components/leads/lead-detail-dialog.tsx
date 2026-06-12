@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   Calendar,
+  CalendarClock,
   Eye,
   FileText,
   Globe2,
@@ -27,11 +28,38 @@ import { useEffect, useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
+import { adminEmployeesApi } from "@/api/employees.api"
 import { contactsApi } from "@/api/contacts.api"
+import { followUpsApi } from "@/api/follow-ups.api"
 import { leadsApi } from "@/api/leads.api"
 import { servicesApi } from "@/api/services.api"
 import { ContactProfileDialog } from "@/components/contacts/contact-profile-dialog"
 import { getContactApiMessage, getContactName } from "@/components/contacts/contacts.utils"
+import { FollowUpActionsMenu } from "@/components/follow-ups/follow-up-actions-menu"
+import { FollowUpAssignDialog } from "@/components/follow-ups/follow-up-assign-dialog"
+import { FollowUpCompleteDialog } from "@/components/follow-ups/follow-up-complete-dialog"
+import { FollowUpConfirmDialog } from "@/components/follow-ups/follow-up-confirm-dialog"
+import { FollowUpDetailDialog } from "@/components/follow-ups/follow-up-detail-dialog"
+import { FollowUpDialog } from "@/components/follow-ups/follow-up-dialog"
+import { FollowUpEditDialog } from "@/components/follow-ups/follow-up-edit-dialog"
+import { FollowUpRescheduleDialog } from "@/components/follow-ups/follow-up-reschedule-dialog"
+import {
+  followUpOutcomeBadgeClasses,
+  followUpStatusBadgeClasses,
+  followUpTypeBadgeClasses,
+} from "@/components/follow-ups/follow-ups.constants"
+import {
+  followUpFormToCreateInput,
+  followUpFormToUpdateInput,
+  formatFollowUpDateTime,
+  fromDateTimeInputValue,
+  getFollowUpApiMessage,
+  getFollowUpAssigneeName,
+  getFollowUpContactName,
+  getFollowUpOutcomeLabel,
+  getFollowUpStatusLabel,
+  getFollowUpTypeLabel,
+} from "@/components/follow-ups/follow-ups.utils"
 import { LeadContactDialog, type LeadContactFormValues } from "@/components/leads/lead-contact-dialog"
 import { SearchableSelect } from "@/components/leads/lead-searchable-select"
 import {
@@ -90,6 +118,14 @@ import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import type { ContactProfileFormValues } from "@/schemas/contact.schemas"
 import type {
+  FollowUpAssignFormValues,
+  FollowUpCompleteFormValues,
+  FollowUpFormValues,
+  FollowUpRescheduleFormValues,
+  FollowUpUpdateFormValues,
+} from "@/schemas/follow-up.schemas"
+import type { FollowUp } from "@/types/follow-up"
+import type {
   Lead,
   LeadActivity,
   LeadAttachment,
@@ -98,6 +134,7 @@ import type {
   LeadNote,
 } from "@/types/lead"
 import {
+  formatCode,
   formatDescription,
   formatDesignation,
   formatDisplayName,
@@ -124,6 +161,16 @@ export function LeadDetailDialog({ leadId, open, onOpenChange }: LeadDetailDialo
   const [addContactOpen, setAddContactOpen] = useState(false)
   const [editContact, setEditContact] = useState<LeadContact | null>(null)
   const [removeContactTarget, setRemoveContactTarget] = useState<LeadContact | null>(null)
+  const [followUpOpen, setFollowUpOpen] = useState(false)
+  const [editFollowUp, setEditFollowUp] = useState<FollowUp | null>(null)
+  const [viewFollowUp, setViewFollowUp] = useState<FollowUp | null>(null)
+  const [assignFollowUp, setAssignFollowUp] = useState<FollowUp | null>(null)
+  const [completeFollowUp, setCompleteFollowUp] = useState<FollowUp | null>(null)
+  const [rescheduleFollowUp, setRescheduleFollowUp] = useState<FollowUp | null>(null)
+  const [cancelFollowUp, setCancelFollowUp] = useState<FollowUp | null>(null)
+  const [reopenFollowUp, setReopenFollowUp] = useState<FollowUp | null>(null)
+  const [missedFollowUp, setMissedFollowUp] = useState<FollowUp | null>(null)
+  const [followUpMessage, setFollowUpMessage] = useState<string | null>(null)
 
   const detailQuery = useQuery({
     queryKey: ["leads", "detail", leadId],
@@ -145,7 +192,28 @@ export function LeadDetailDialog({ leadId, open, onOpenChange }: LeadDetailDialo
     queryFn: () => leadsApi.attachments(leadId as string),
     enabled: open && Boolean(leadId),
   })
+  const followUpsQuery = useQuery({
+    queryKey: ["leads", "follow-ups", leadId],
+    queryFn: () =>
+      followUpsApi.list({
+        leadId: leadId as string,
+        page: 1,
+        limit: 10,
+        view: "all",
+        sortBy: "scheduledAt",
+        sortOrder: "desc",
+      }),
+    enabled: open && Boolean(leadId),
+  })
+  const employeesQuery = useQuery({
+    queryKey: ["employees", "follow-up-options"],
+    queryFn: () => adminEmployeesApi.list({ page: 1, limit: 100 }),
+    enabled: open,
+    staleTime: 5 * 60 * 1000,
+  })
   const lead = detailQuery.data?.data ?? null
+  const followUps = followUpsQuery.data?.data.followUps ?? []
+  const employees = employeesQuery.data?.data.employees ?? []
 
   const existingContacts = lead?.contacts?.length ? lead.contacts : lead?.primaryContact ? [lead.primaryContact] : []
   const existingContactIds = existingContacts.map((contact) => contact.id)
@@ -159,6 +227,225 @@ export function LeadDetailDialog({ leadId, open, onOpenChange }: LeadDetailDialo
   }
   const invalidateContacts = () => {
     void queryClient.invalidateQueries({ queryKey: ["contacts"] })
+  }
+  const invalidateFollowUps = () => {
+    void queryClient.invalidateQueries({ queryKey: ["leads", "follow-ups", leadId] })
+    void queryClient.invalidateQueries({ queryKey: ["follow-ups"] })
+  }
+
+  const createFollowUpMutation = useMutation({
+    mutationFn: (values: FollowUpFormValues) => followUpsApi.create(followUpFormToCreateInput(values)),
+    onSuccess: () => {
+      setFollowUpOpen(false)
+      setFollowUpMessage(null)
+      invalidateFollowUps()
+      invalidateActivities()
+    },
+    onError: (error) => setFollowUpMessage(getFollowUpApiMessage(error, "Unable to schedule follow-up.")),
+  })
+
+  const updateFollowUpMutation = useMutation({
+    mutationFn: (values: FollowUpUpdateFormValues) => {
+      if (!editFollowUp) throw new Error("Follow-up is required to update.")
+
+      return followUpsApi.update(editFollowUp.id, followUpFormToUpdateInput(values))
+    },
+    onSuccess: () => {
+      setEditFollowUp(null)
+      setFollowUpMessage(null)
+      invalidateFollowUps()
+      invalidateActivities()
+    },
+    onError: (error) => setFollowUpMessage(getFollowUpApiMessage(error, "Unable to update follow-up.")),
+  })
+
+  const assignFollowUpMutation = useMutation({
+    mutationFn: (values: FollowUpAssignFormValues) => {
+      if (!assignFollowUp) throw new Error("Follow-up is required to assign.")
+
+      return followUpsApi.assign(assignFollowUp.id, values)
+    },
+    onSuccess: () => {
+      setAssignFollowUp(null)
+      setFollowUpMessage(null)
+      invalidateFollowUps()
+      invalidateActivities()
+    },
+    onError: (error) => setFollowUpMessage(getFollowUpApiMessage(error, "Unable to assign follow-up.")),
+  })
+
+  const completeFollowUpMutation = useMutation({
+    mutationFn: (values: FollowUpCompleteFormValues) => {
+      if (!completeFollowUp) throw new Error("Follow-up is required to complete.")
+
+      return followUpsApi.complete(completeFollowUp.id, values)
+    },
+    onSuccess: () => {
+      setCompleteFollowUp(null)
+      setFollowUpMessage(null)
+      invalidateFollowUps()
+      invalidateActivities()
+    },
+    onError: (error) => setFollowUpMessage(getFollowUpApiMessage(error, "Unable to complete follow-up.")),
+  })
+
+  const rescheduleFollowUpMutation = useMutation({
+    mutationFn: (values: FollowUpRescheduleFormValues) => {
+      if (!rescheduleFollowUp) throw new Error("Follow-up is required to reschedule.")
+
+      return followUpsApi.reschedule(rescheduleFollowUp.id, {
+        scheduledAt: fromDateTimeInputValue(values.scheduledAt),
+        reason: values.reason,
+      })
+    },
+    onSuccess: () => {
+      setRescheduleFollowUp(null)
+      setFollowUpMessage(null)
+      invalidateFollowUps()
+      invalidateActivities()
+    },
+    onError: (error) => setFollowUpMessage(getFollowUpApiMessage(error, "Unable to reschedule follow-up.")),
+  })
+
+  const cancelFollowUpMutation = useMutation({
+    mutationFn: (reason?: string) => {
+      if (!cancelFollowUp) throw new Error("Follow-up is required to cancel.")
+
+      return followUpsApi.cancel(cancelFollowUp.id, { reason })
+    },
+    onSuccess: () => {
+      setCancelFollowUp(null)
+      setFollowUpMessage(null)
+      invalidateFollowUps()
+      invalidateActivities()
+    },
+    onError: (error) => setFollowUpMessage(getFollowUpApiMessage(error, "Unable to cancel follow-up.")),
+  })
+
+  const reopenFollowUpMutation = useMutation({
+    mutationFn: (reason?: string) => {
+      if (!reopenFollowUp) throw new Error("Follow-up is required to reopen.")
+
+      return followUpsApi.reopen(reopenFollowUp.id, { reason })
+    },
+    onSuccess: () => {
+      setReopenFollowUp(null)
+      setFollowUpMessage(null)
+      invalidateFollowUps()
+      invalidateActivities()
+    },
+    onError: (error) => setFollowUpMessage(getFollowUpApiMessage(error, "Unable to reopen follow-up.")),
+  })
+
+  const missedFollowUpMutation = useMutation({
+    mutationFn: () => {
+      if (!missedFollowUp) throw new Error("Follow-up is required to mark as missed.")
+
+      return followUpsApi.markMissed(missedFollowUp.id)
+    },
+    onSuccess: () => {
+      setMissedFollowUp(null)
+      setFollowUpMessage(null)
+      invalidateFollowUps()
+      invalidateActivities()
+    },
+    onError: (error) => setFollowUpMessage(getFollowUpApiMessage(error, "Unable to mark follow-up as missed.")),
+  })
+
+  const openFollowUpDialog = () => {
+    createFollowUpMutation.reset()
+    setFollowUpMessage(null)
+    setFollowUpOpen(true)
+  }
+
+  const closeFollowUpDialog = (nextOpen: boolean) => {
+    if (nextOpen || createFollowUpMutation.isPending) return
+    setFollowUpOpen(false)
+    setFollowUpMessage(null)
+  }
+
+  const openEditFollowUpDialog = (followUp: FollowUp) => {
+    updateFollowUpMutation.reset()
+    setFollowUpMessage(null)
+    setEditFollowUp(followUp)
+  }
+
+  const closeEditFollowUpDialog = (nextOpen: boolean) => {
+    if (nextOpen || updateFollowUpMutation.isPending) return
+    setEditFollowUp(null)
+    setFollowUpMessage(null)
+  }
+
+  const openAssignFollowUpDialog = (followUp: FollowUp) => {
+    assignFollowUpMutation.reset()
+    setFollowUpMessage(null)
+    setAssignFollowUp(followUp)
+  }
+
+  const closeAssignFollowUpDialog = (nextOpen: boolean) => {
+    if (nextOpen || assignFollowUpMutation.isPending) return
+    setAssignFollowUp(null)
+    setFollowUpMessage(null)
+  }
+
+  const openCompleteFollowUpDialog = (followUp: FollowUp) => {
+    completeFollowUpMutation.reset()
+    setFollowUpMessage(null)
+    setCompleteFollowUp(followUp)
+  }
+
+  const closeCompleteFollowUpDialog = (nextOpen: boolean) => {
+    if (nextOpen || completeFollowUpMutation.isPending) return
+    setCompleteFollowUp(null)
+    setFollowUpMessage(null)
+  }
+
+  const openRescheduleFollowUpDialog = (followUp: FollowUp) => {
+    rescheduleFollowUpMutation.reset()
+    setFollowUpMessage(null)
+    setRescheduleFollowUp(followUp)
+  }
+
+  const closeRescheduleFollowUpDialog = (nextOpen: boolean) => {
+    if (nextOpen || rescheduleFollowUpMutation.isPending) return
+    setRescheduleFollowUp(null)
+    setFollowUpMessage(null)
+  }
+
+  const openCancelFollowUpDialog = (followUp: FollowUp) => {
+    cancelFollowUpMutation.reset()
+    setFollowUpMessage(null)
+    setCancelFollowUp(followUp)
+  }
+
+  const closeCancelFollowUpDialog = (nextOpen: boolean) => {
+    if (nextOpen || cancelFollowUpMutation.isPending) return
+    setCancelFollowUp(null)
+    setFollowUpMessage(null)
+  }
+
+  const openReopenFollowUpDialog = (followUp: FollowUp) => {
+    reopenFollowUpMutation.reset()
+    setFollowUpMessage(null)
+    setReopenFollowUp(followUp)
+  }
+
+  const closeReopenFollowUpDialog = (nextOpen: boolean) => {
+    if (nextOpen || reopenFollowUpMutation.isPending) return
+    setReopenFollowUp(null)
+    setFollowUpMessage(null)
+  }
+
+  const openMissedFollowUpDialog = (followUp: FollowUp) => {
+    missedFollowUpMutation.reset()
+    setFollowUpMessage(null)
+    setMissedFollowUp(followUp)
+  }
+
+  const closeMissedFollowUpDialog = (nextOpen: boolean) => {
+    if (nextOpen || missedFollowUpMutation.isPending) return
+    setMissedFollowUp(null)
+    setFollowUpMessage(null)
   }
 
   return (
@@ -208,6 +495,22 @@ export function LeadDetailDialog({ leadId, open, onOpenChange }: LeadDetailDialo
                 onRemove={setRemoveContactTarget}
               />
               <LeadServicesCard lead={lead} onAdd={() => setServiceOpen(true)} />
+              <LeadFollowUpsCard
+                followUps={followUps}
+                isLoading={followUpsQuery.isLoading}
+                isError={followUpsQuery.isError}
+                error={followUpsQuery.error}
+                onRetry={() => followUpsQuery.refetch()}
+                onAdd={openFollowUpDialog}
+                onView={setViewFollowUp}
+                onEdit={openEditFollowUpDialog}
+                onAssign={openAssignFollowUpDialog}
+                onComplete={openCompleteFollowUpDialog}
+                onReschedule={openRescheduleFollowUpDialog}
+                onCancel={openCancelFollowUpDialog}
+                onReopen={openReopenFollowUpDialog}
+                onMarkMissed={openMissedFollowUpDialog}
+              />
               <LeadNotesCard
                 notes={notesQuery.data?.data ?? []}
                 isLoading={notesQuery.isLoading}
@@ -350,6 +653,116 @@ export function LeadDetailDialog({ leadId, open, onOpenChange }: LeadDetailDialo
             invalidateDetail()
             invalidateActivities()
             invalidateContacts()
+          }}
+        />
+        <FollowUpDialog
+          open={followUpOpen}
+          isPending={createFollowUpMutation.isPending}
+          error={createFollowUpMutation.error}
+          message={followUpMessage}
+          leadId={leadId ?? undefined}
+          leadLabel={lead ? getLeadTitle(lead) : undefined}
+          employees={employees}
+          isLoadingEmployees={employeesQuery.isLoading}
+          onOpenChange={closeFollowUpDialog}
+          onSubmit={(values) => {
+            setFollowUpMessage(null)
+            createFollowUpMutation.mutate(values)
+          }}
+        />
+        <FollowUpEditDialog
+          open={Boolean(editFollowUp)}
+          followUp={editFollowUp}
+          isPending={updateFollowUpMutation.isPending}
+          error={updateFollowUpMutation.error}
+          message={followUpMessage}
+          employees={employees}
+          isLoadingEmployees={employeesQuery.isLoading}
+          onOpenChange={closeEditFollowUpDialog}
+          onSubmit={(values) => {
+            setFollowUpMessage(null)
+            updateFollowUpMutation.mutate(values)
+          }}
+        />
+        <FollowUpDetailDialog
+          open={Boolean(viewFollowUp)}
+          followUp={viewFollowUp}
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) setViewFollowUp(null)
+          }}
+        />
+        <FollowUpAssignDialog
+          open={Boolean(assignFollowUp)}
+          followUp={assignFollowUp}
+          isPending={assignFollowUpMutation.isPending}
+          error={assignFollowUpMutation.error}
+          message={followUpMessage}
+          employees={employees}
+          isLoadingEmployees={employeesQuery.isLoading}
+          onOpenChange={closeAssignFollowUpDialog}
+          onSubmit={(values) => {
+            setFollowUpMessage(null)
+            assignFollowUpMutation.mutate(values)
+          }}
+        />
+        <FollowUpCompleteDialog
+          open={Boolean(completeFollowUp)}
+          followUp={completeFollowUp}
+          isPending={completeFollowUpMutation.isPending}
+          error={completeFollowUpMutation.error}
+          message={followUpMessage}
+          onOpenChange={closeCompleteFollowUpDialog}
+          onSubmit={(values) => {
+            setFollowUpMessage(null)
+            completeFollowUpMutation.mutate(values)
+          }}
+        />
+        <FollowUpRescheduleDialog
+          open={Boolean(rescheduleFollowUp)}
+          followUp={rescheduleFollowUp}
+          isPending={rescheduleFollowUpMutation.isPending}
+          error={rescheduleFollowUpMutation.error}
+          message={followUpMessage}
+          onOpenChange={closeRescheduleFollowUpDialog}
+          onSubmit={(values) => {
+            setFollowUpMessage(null)
+            rescheduleFollowUpMutation.mutate(values)
+          }}
+        />
+        <FollowUpConfirmDialog
+          mode="cancel"
+          open={Boolean(cancelFollowUp)}
+          followUp={cancelFollowUp}
+          isPending={cancelFollowUpMutation.isPending}
+          message={followUpMessage}
+          onOpenChange={closeCancelFollowUpDialog}
+          onConfirm={(reason) => {
+            setFollowUpMessage(null)
+            cancelFollowUpMutation.mutate(reason)
+          }}
+        />
+        <FollowUpConfirmDialog
+          mode="reopen"
+          open={Boolean(reopenFollowUp)}
+          followUp={reopenFollowUp}
+          isPending={reopenFollowUpMutation.isPending}
+          message={followUpMessage}
+          onOpenChange={closeReopenFollowUpDialog}
+          onConfirm={(reason) => {
+            setFollowUpMessage(null)
+            reopenFollowUpMutation.mutate(reason)
+          }}
+        />
+        <FollowUpConfirmDialog
+          mode="missed"
+          open={Boolean(missedFollowUp)}
+          followUp={missedFollowUp}
+          isPending={missedFollowUpMutation.isPending}
+          message={followUpMessage}
+          onOpenChange={closeMissedFollowUpDialog}
+          onConfirm={() => {
+            setFollowUpMessage(null)
+            missedFollowUpMutation.mutate()
           }}
         />
       </DialogContent>
@@ -506,6 +919,153 @@ function LeadServicesCard({ lead, onAdd }: { lead: Lead; onAdd: () => void }) {
       ) : (
         <EmptyText>No services linked.</EmptyText>
       )}
+    </DetailSection>
+  )
+}
+
+function LeadFollowUpsCard({
+  followUps,
+  isLoading,
+  isError,
+  error,
+  onRetry,
+  onAdd,
+  onView,
+  onEdit,
+  onAssign,
+  onComplete,
+  onReschedule,
+  onCancel,
+  onReopen,
+  onMarkMissed,
+}: {
+  followUps: FollowUp[]
+  isLoading: boolean
+  isError: boolean
+  error: unknown
+  onRetry: () => void
+  onAdd: () => void
+  onView: (followUp: FollowUp) => void
+  onEdit: (followUp: FollowUp) => void
+  onAssign: (followUp: FollowUp) => void
+  onComplete: (followUp: FollowUp) => void
+  onReschedule: (followUp: FollowUp) => void
+  onCancel: (followUp: FollowUp) => void
+  onReopen: (followUp: FollowUp) => void
+  onMarkMissed: (followUp: FollowUp) => void
+}) {
+  return (
+    <DetailSection title="Follow-Ups" actionLabel="Schedule Follow-Up" onAdd={onAdd}>
+      <SectionState
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        fallback="Unable to load follow-ups."
+        onRetry={onRetry}
+      />
+      {!isLoading && !isError && followUps.length ? (
+        <div className="space-y-2">
+          {followUps.map((followUp) => (
+            <div
+              key={followUp.id}
+              className="flex items-start gap-3 rounded-lg border border-border/70 bg-muted/30 p-3"
+            >
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <CalendarClock className="size-4" />
+              </span>
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {followUp.followUpNumber ? (
+                    <span className="font-mono text-xs text-muted-foreground">
+                      {formatCode(followUp.followUpNumber)}
+                    </span>
+                  ) : null}
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "whitespace-nowrap px-2 py-0.5 font-normal",
+                      followUpTypeBadgeClasses[followUp.type] ?? "border-border bg-muted text-muted-foreground"
+                    )}
+                  >
+                    {getFollowUpTypeLabel(followUp.type, followUp.customType)}
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "whitespace-nowrap px-2 py-0.5 font-normal",
+                      followUpStatusBadgeClasses[followUp.status] ?? "border-border bg-muted text-muted-foreground"
+                    )}
+                  >
+                    {getFollowUpStatusLabel(followUp.status)}
+                  </Badge>
+                  {followUp.outcome ? (
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "whitespace-nowrap px-2 py-0.5 font-normal",
+                        followUpOutcomeBadgeClasses[followUp.outcome] ?? "border-border bg-muted text-muted-foreground"
+                      )}
+                    >
+                      {getFollowUpOutcomeLabel(followUp.outcome)}
+                    </Badge>
+                  ) : null}
+                  {followUp.isOverdue ? (
+                    <Badge
+                      variant="outline"
+                      className="border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300"
+                    >
+                      Overdue
+                    </Badge>
+                  ) : null}
+                </div>
+                {followUp.notes ? (
+                  <p className="line-clamp-2 whitespace-pre-wrap break-words text-sm font-medium">
+                    {followUp.notes}
+                  </p>
+                ) : null}
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <CalendarClock className="size-3" />
+                    {formatFollowUpDateTime(followUp.scheduledAt)}
+                  </span>
+                  <span>{getFollowUpAssigneeName(followUp)}</span>
+                  {followUp.status === "COMPLETED" && followUp.completedAt ? (
+                    <span>Completed {formatFollowUpDateTime(followUp.completedAt)}</span>
+                  ) : null}
+                  {followUp.completedBy?.name ? (
+                    <span>by {formatDisplayName(followUp.completedBy.name)}</span>
+                  ) : null}
+                </div>
+                {followUp.primaryContact?.fullName || followUp.companyName ? (
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    {followUp.primaryContact?.fullName ? (
+                      <span>
+                        {getFollowUpContactName(followUp)}
+                        {followUp.primaryContact?.designation
+                          ? ` · ${formatDesignation(followUp.primaryContact.designation)}`
+                          : ""}
+                      </span>
+                    ) : null}
+                    {followUp.companyName ? <span>{followUp.companyName}</span> : null}
+                  </div>
+                ) : null}
+              </div>
+              <FollowUpActionsMenu
+                followUp={followUp}
+                onView={onView}
+                onEdit={onEdit}
+                onAssign={onAssign}
+                onComplete={onComplete}
+                onReschedule={onReschedule}
+                onCancel={onCancel}
+                onReopen={onReopen}
+                onMarkMissed={onMarkMissed}
+              />
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {!isLoading && !isError && !followUps.length ? <EmptyText>No follow-ups scheduled.</EmptyText> : null}
     </DetailSection>
   )
 }
