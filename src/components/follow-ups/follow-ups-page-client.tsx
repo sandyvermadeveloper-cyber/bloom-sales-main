@@ -464,7 +464,7 @@ function FollowUpsPageContent() {
               setView(value as FollowUpView)
             }}
           >
-            <TabsList>
+            <TabsList className=" w-full">
               {followUpViews.map((followUpView) => (
                 <TabsTrigger key={followUpView} value={followUpView}>
                   {followUpViewLabels[followUpView]}

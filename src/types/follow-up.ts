@@ -137,3 +137,42 @@ export type FollowUpStats = {
   upcomingCount: number
   completedTodayCount: number
 }
+
+export type FollowUpNote = {
+  id: string
+  content: string
+  visibility?: "TEAM" | "PRIVATE" | string
+  createdBy?: FollowUpOwner | null
+  createdAt?: string
+}
+
+export type FollowUpNoteInput = {
+  resourceType: "FOLLOW_UP"
+  resourceId: string
+  content: string
+  visibility: "TEAM" | "PRIVATE"
+}
+
+export type FollowUpNoteUpdateInput = {
+  content?: string
+  visibility?: "TEAM" | "PRIVATE"
+}
+
+export type FollowUpAttachment = {
+  id: string
+  fileName: string
+  fileSize?: number
+  mimeType?: string
+  url?: string
+  fileUrl?: string
+  downloadUrl?: string
+  uploadedBy?: FollowUpOwner | null
+  createdAt?: string
+}
+
+export type FollowUpAttachmentInput = {
+  resourceType: "FOLLOW_UP"
+  resourceId: string
+  file: File
+  fileName?: string
+}

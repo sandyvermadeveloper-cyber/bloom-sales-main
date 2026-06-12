@@ -160,15 +160,6 @@ export function FollowUpDialog({
                           disabled={isPending}
                           onChange={field.onChange}
                         />
-                        {onLeadSearchChange ? (
-                          <Input
-                            value={leadSearchDraft}
-                            onChange={(event) => setLeadSearchDraft(event.target.value)}
-                            placeholder="Type to search leads by title or number"
-                            disabled={isPending}
-                            className="h-9"
-                          />
-                        ) : null}
                       </div>
                     </FormControl>
                     <FormMessage />

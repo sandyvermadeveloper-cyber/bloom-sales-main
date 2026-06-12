@@ -167,7 +167,7 @@ export function FollowUpsTable({
                           <TooltipProvider delayDuration={800}>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <p className="line-clamp-2 cursor-help text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
+                                <p className="line-clamp-2 cursor-help text-sm font-semibold text-foreground transition-colors ">
                                   {leadLabel.length > 28 ? `${leadLabel.slice(0, 28)}...` : leadLabel}
                                 </p>
                               </TooltipTrigger>
@@ -278,10 +278,17 @@ export function FollowUpsTable({
                             {getFollowUpContactName(followUp)}
                           </p>
                           {followUp.primaryContact?.primaryEmail ? (
-                            <p className="flex max-w-[180px] items-center gap-1 truncate text-xs text-muted-foreground">
-                              <Mail className="size-3 shrink-0" />
-                              {formatEmail(followUp.primaryContact.primaryEmail)}
-                            </p>
+                             <Tooltip>
+                              <TooltipTrigger asChild>
+                                <p className="flex max-w-[180px] cursor-pointer items-center gap-1 truncate text-xs text-muted-foreground">
+                                  <Mail className="size-3 shrink-0" />
+                                  {formatEmail(followUp.primaryContact.primaryEmail)}
+                                </p>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{followUp.primaryContact.primaryEmail}</p>
+                              </TooltipContent>
+                            </Tooltip>
                           ) : null}
                           {followUp.primaryContact?.primaryPhone ? (
                             <p className="flex max-w-[180px] items-center gap-1 truncate text-xs text-muted-foreground">

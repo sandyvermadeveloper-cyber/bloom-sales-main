@@ -63,20 +63,6 @@ export function FollowUpsFilters({
         />
       </div>
 
-      <Select value={status} onValueChange={(value) => onStatusChange(value as FollowUpStatus | "all")}>
-        <SelectTrigger className="h-10 w-full">
-          <SelectValue placeholder="Status" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All statuses</SelectItem>
-          {followUpStatuses.map((followUpStatus) => (
-            <SelectItem key={followUpStatus} value={followUpStatus}>
-              {followUpStatusLabels[followUpStatus]}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
       <div className="col-span-2 flex gap-3 md:col-span-4 lg:col-span-2">
         <div className="min-w-0 flex-1">
           <SearchableSelect

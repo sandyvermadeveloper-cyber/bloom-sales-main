@@ -6,7 +6,12 @@ import type {
   CompleteFollowUpInput,
   CreateFollowUpInput,
   FollowUp,
+  FollowUpAttachment,
+  FollowUpAttachmentInput,
   FollowUpData,
+  FollowUpNote,
+  FollowUpNoteInput,
+  FollowUpNoteUpdateInput,
   FollowUpStats,
   ListFollowUpsData,
   ListFollowUpsQuery,
@@ -23,6 +28,21 @@ type FollowUpsListResponseData =
       followUps?: FollowUp[]
       pagination?: ListFollowUpsData["pagination"]
     }
+
+type ResourceListResponseData<T> =
+  | T[]
+  | {
+      items?: T[]
+      notes?: T[]
+      attachments?: T[]
+      pagination?: unknown
+    }
+
+const normalizeResourceList = <T>(data: ResourceListResponseData<T>): T[] => {
+  if (Array.isArray(data)) return data
+
+  return data.items ?? data.notes ?? data.attachments ?? []
+}
 
 const normalizeFollowUpsList = (
   data: FollowUpsListResponseData,
@@ -168,6 +188,97 @@ export const followUpsApi = {
       `/api/v1/follow-ups/${followUpId}/missed`,
       {}
     )
+
+    return response.data
+  },
+
+  async notes(followUpId: string) {
+    const response = await apiClient.get<ApiSuccess<ResourceListResponseData<FollowUpNote>>>("/api/v1/notes", {
+      params: {
+        resourceType: "FOLLOW_UP",
+        resourceId: followUpId,
+        page: 1,
+        limit: 20,
+        sortBy: "createdAt",
+        sortOrder: "desc",
+      },
+    })
+
+    return {
+      ...response.data,
+      data: normalizeResourceList(response.data.data),
+    } satisfies ApiSuccess<FollowUpNote[]>
+  },
+
+  async createNote(input: FollowUpNoteInput) {
+    const response = await apiClient.post<ApiSuccess<FollowUpNote>>("/api/v1/notes", input)
+
+    return response.data
+  },
+
+  async updateNote(noteId: string, input: FollowUpNoteUpdateInput) {
+    const response = await apiClient.patch<ApiSuccess<{ id: string }>>(`/api/v1/notes/${noteId}`, input)
+
+    return response.data
+  },
+
+  async deleteNote(noteId: string) {
+    const response = await apiClient.delete<ApiSuccess<null>>(`/api/v1/notes/${noteId}`)
+
+    return response.data
+  },
+
+  async attachments(followUpId: string) {
+    const response = await apiClient.get<ApiSuccess<ResourceListResponseData<FollowUpAttachment>>>(
+      "/api/v1/attachments",
+      {
+        params: {
+          resourceType: "FOLLOW_UP",
+          resourceId: followUpId,
+          page: 1,
+          limit: 20,
+          sortBy: "createdAt",
+          sortOrder: "desc",
+        },
+      }
+    )
+
+    return {
+      ...response.data,
+      data: normalizeResourceList(response.data.data),
+    } satisfies ApiSuccess<FollowUpAttachment[]>
+  },
+
+  async attachmentDetail(attachmentId: string) {
+    const response = await apiClient.get<ApiSuccess<FollowUpAttachment>>(
+      `/api/v1/attachments/${attachmentId}`
+    )
+
+    return response.data
+  },
+
+  async createAttachment(input: FollowUpAttachmentInput) {
+    const formData = new FormData()
+    formData.append("resourceType", input.resourceType)
+    formData.append("resourceId", input.resourceId)
+    formData.append("file", input.file)
+    if (input.fileName) formData.append("fileName", input.fileName)
+
+    const response = await apiClient.post<ApiSuccess<FollowUpAttachment>>(
+      "/api/v1/attachments",
+      formData,
+      {
+        headers: {
+          "Content-Type": undefined,
+        },
+      }
+    )
+
+    return response.data
+  },
+
+  async deleteAttachment(attachmentId: string) {
+    const response = await apiClient.delete<ApiSuccess<null>>(`/api/v1/attachments/${attachmentId}`)
 
     return response.data
   },
