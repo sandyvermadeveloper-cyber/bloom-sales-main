@@ -106,6 +106,7 @@ export type CustomerAssignInput = {
 
 export type CustomerStatusChangeInput = {
   status: CustomerStatus
+  reason?: string
 }
 
 export type CustomerAssignment = {

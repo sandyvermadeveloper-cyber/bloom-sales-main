@@ -112,6 +112,11 @@ function CustomersPageContent() {
     void queryClient.invalidateQueries({ queryKey: ["customers"] })
   }
 
+  const invalidateCustomerDetail = (customerId: string) => {
+    void queryClient.invalidateQueries({ queryKey: ["customers", "detail", customerId] })
+    void queryClient.invalidateQueries({ queryKey: ["customers", "activities", customerId] })
+  }
+
   const createMutation = useMutation({
     mutationFn: async (values: CustomerFormValues) => {
       const response = await customersApi.create(customerFormToCreateInput(values))
@@ -205,13 +210,18 @@ function CustomersPageContent() {
     mutationFn: (values: CustomerStatusChangeFormValues) => {
       if (!statusCustomer) throw new Error("Customer is required to change status.")
 
-      return customersApi.changeStatus(statusCustomer.id, values)
+      return customersApi.changeStatus(statusCustomer.id, {
+        status: values.status,
+        reason: values.status === "BLOCKED" ? values.reason?.trim() : undefined,
+      })
     },
     onSuccess: (response) => {
+      const changedCustomerId = statusCustomer?.id
       setStatusCustomer(null)
       setDialogMessage(null)
       setPageMessage(response.message)
       invalidateCustomers()
+      if (changedCustomerId) invalidateCustomerDetail(changedCustomerId)
     },
     onError: (error) => {
       setDialogMessage(getCustomerApiMessage(error, "Unable to change customer status. Please try again."))

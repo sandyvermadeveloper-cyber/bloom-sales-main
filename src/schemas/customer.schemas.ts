@@ -42,9 +42,15 @@ export const customerUpdateSchema = z.object({
 
 export type CustomerUpdateFormValues = z.infer<typeof customerUpdateSchema>
 
-export const customerStatusChangeSchema = z.object({
-  status: z.enum(customerStatuses),
-})
+export const customerStatusChangeSchema = z
+  .object({
+    status: z.enum(customerStatuses),
+    reason: z.string().trim().optional(),
+  })
+  .refine((values) => values.status !== "BLOCKED" || Boolean(values.reason), {
+    path: ["reason"],
+    message: "Please provide a reason when blocking a customer",
+  })
 
 export type CustomerStatusChangeFormValues = z.infer<typeof customerStatusChangeSchema>
 

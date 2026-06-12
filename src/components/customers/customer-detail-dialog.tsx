@@ -673,6 +673,11 @@ function CustomerActivitiesCard({
               </div>
               <div className="pb-3">
                 <p className="text-sm font-medium">{formatActivityType(activity.type)}</p>
+                {formatActivityMetadata(activity.metadata) ? (
+                  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                    {formatActivityMetadata(activity.metadata)}
+                  </p>
+                ) : null}
                 <p className="text-xs text-muted-foreground">
                   {[activity.performedBy?.name, formatCustomerDate(activity.createdAt)].filter(Boolean).join(" · ")}
                 </p>
@@ -1333,6 +1338,31 @@ function CustomerDetailSkeleton() {
 
 const formatActivityType = (value: string) =>
   value.replaceAll("_", " ").toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase())
+
+const formatActivityMetadata = (metadata?: Record<string, unknown>) => {
+  if (!metadata) return ""
+
+  const reason = getMetadataText(metadata, ["reason", "blockReason", "blockedReason", "statusReason"])
+  const status = getMetadataText(metadata, ["status", "newStatus", "toStatus"])
+  const previousStatus = getMetadataText(metadata, ["previousStatus", "oldStatus", "fromStatus"])
+
+  return [
+    previousStatus && status ? `${formatTitleCase(previousStatus)} to ${formatTitleCase(status)}` : null,
+    !previousStatus && status ? `Status: ${formatTitleCase(status)}` : null,
+    reason ? `Reason: ${reason}` : null,
+  ]
+    .filter(Boolean)
+    .join(" - ")
+}
+
+const getMetadataText = (metadata: Record<string, unknown>, keys: string[]) => {
+  for (const key of keys) {
+    const value = metadata[key]
+    if (typeof value === "string" && value.trim()) return value.trim()
+  }
+
+  return ""
+}
 
 const formatFileSize = (value?: number) => {
   if (!value) return ""

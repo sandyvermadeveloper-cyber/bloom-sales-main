@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2 } from "lucide-react"
 import { useEffect } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 
 import { customerStatusLabels, customerStatuses } from "@/components/customers/customers.constants"
 import { getCustomerName } from "@/components/customers/customers.utils"
@@ -32,6 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 import {
   customerStatusChangeSchema,
   type CustomerStatusChangeFormValues,
@@ -39,7 +40,7 @@ import {
 import type { Customer, CustomerStatus } from "@/types/customer"
 import { applyApiFieldErrors } from "@/utils/form-errors"
 
-const statusFields = ["status"] as const
+const statusFields = ["status", "reason"] as const
 
 type CustomerStatusDialogProps = {
   open: boolean
@@ -64,7 +65,12 @@ export function CustomerStatusDialog({
     resolver: zodResolver(customerStatusChangeSchema),
     defaultValues: {
       status: "ACTIVE",
+      reason: "",
     },
+  })
+  const selectedStatus = useWatch({
+    control: form.control,
+    name: "status",
   })
 
   useEffect(() => {
@@ -74,7 +80,7 @@ export function CustomerStatusDialog({
       : "ACTIVE"
 
     form.clearErrors()
-    form.reset({ status: currentStatus })
+    form.reset({ status: currentStatus, reason: "" })
   }, [customer, form, open])
 
   useEffect(() => {
@@ -119,6 +125,27 @@ export function CustomerStatusDialog({
                 </FormItem>
               )}
             />
+
+            {selectedStatus === "BLOCKED" ? (
+              <FormField
+                control={form.control}
+                name="reason"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Block Reason</FormLabel>
+                    <FormControl className="mt-2">
+                      <Textarea
+                        placeholder="Explain why this customer is being blocked"
+                        disabled={isPending}
+                        rows={4}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ) : null}
 
             <DialogFooter>
               <Button type="button" variant="outline" disabled={isPending} onClick={() => onOpenChange(false)}>
