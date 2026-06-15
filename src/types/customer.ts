@@ -112,9 +112,9 @@ export type CustomerStatusChangeInput = {
 export type CustomerAssignment = {
   id: string
   reason?: string
-  employee?: CustomerOwner | null
+  assignedTo?: CustomerOwner | null
   assignedBy?: CustomerOwner | null
-  createdAt?: string
+  assignedAt?: string
 }
 
 export type CustomerActivity = {

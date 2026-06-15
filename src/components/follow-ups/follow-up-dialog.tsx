@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CalendarPlus, Loader2 } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo } from "react"
 import { useForm, useWatch } from "react-hook-form"
 
 import { SearchableSelect } from "@/components/leads/lead-searchable-select"
@@ -84,7 +84,6 @@ export function FollowUpDialog({
   onOpenChange,
   onSubmit,
 }: FollowUpDialogProps) {
-  const [leadSearchDraft, setLeadSearchDraft] = useState("")
   const form = useForm<FollowUpFormValues>({
     resolver: zodResolver(followUpSchema),
     defaultValues: defaultFollowUpValues,
@@ -113,24 +112,8 @@ export function FollowUpDialog({
     applyApiFieldErrors(error, form, followUpFields)
   }, [error, form])
 
-  useEffect(() => {
-    if (!onLeadSearchChange) return
-
-    const timeoutId = window.setTimeout(() => {
-      onLeadSearchChange(leadSearchDraft.trim())
-    }, 400)
-
-    return () => window.clearTimeout(timeoutId)
-  }, [leadSearchDraft, onLeadSearchChange])
-
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(nextOpen) => {
-        if (!nextOpen) setLeadSearchDraft("")
-        onOpenChange(nextOpen)
-      }}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Schedule Follow-Up</DialogTitle>
@@ -160,6 +143,7 @@ export function FollowUpDialog({
                           placeholder={isLoadingLeadOptions ? "Loading leads" : "Select lead"}
                           searchPlaceholder="Search leads..."
                           disabled={isPending}
+                          onSearchChange={onLeadSearchChange}
                           onChange={field.onChange}
                         />
                       </div>

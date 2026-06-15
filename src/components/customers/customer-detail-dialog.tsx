@@ -478,7 +478,7 @@ function CustomerAssignmentsCard({
               </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">
-                  {formatTitleCase(assignment.employee?.name || "Unassigned")}
+                  {formatTitleCase(assignment.assignedTo?.name || "Unassigned")}
                 </p>
                 {assignment.reason ? (
                   <p className="line-clamp-2 text-xs text-muted-foreground">{assignment.reason}</p>
@@ -486,7 +486,7 @@ function CustomerAssignmentsCard({
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   {[
                     assignment.assignedBy?.name ? `By ${formatTitleCase(assignment.assignedBy.name)}` : null,
-                    formatCustomerDate(assignment.createdAt),
+                    formatCustomerDate(assignment.assignedAt),
                   ]
                     .filter(Boolean)
                     .join(" · ")}
