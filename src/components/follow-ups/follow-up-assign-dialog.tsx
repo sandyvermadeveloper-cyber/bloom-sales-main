@@ -44,6 +44,7 @@ type FollowUpAssignDialogProps = {
   message: string | null
   employees: Employee[]
   isLoadingEmployees?: boolean
+  onEmployeeSearchChange?: (value: string) => void
   onOpenChange: (open: boolean) => void
   onSubmit: (values: FollowUpAssignFormValues) => void
 }
@@ -56,6 +57,7 @@ export function FollowUpAssignDialog({
   message,
   employees,
   isLoadingEmployees = false,
+  onEmployeeSearchChange,
   onOpenChange,
   onSubmit,
 }: FollowUpAssignDialogProps) {
@@ -113,6 +115,7 @@ export function FollowUpAssignDialog({
                       placeholder={isLoadingEmployees ? "Loading employees" : "Select employee"}
                       searchPlaceholder="Search employees..."
                       disabled={isPending || isLoadingEmployees}
+                      onSearchChange={onEmployeeSearchChange}
                       onChange={field.onChange}
                     />
                   </FormControl>

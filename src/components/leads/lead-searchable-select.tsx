@@ -1,7 +1,7 @@
 "use client"
 
 import { Check, ChevronDown, Search, X } from "lucide-react"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -26,6 +26,7 @@ type SearchableSelectProps = {
   placeholder: string
   searchPlaceholder: string
   disabled?: boolean
+  onSearchChange?: (value: string) => void
   onChange: (value: string) => void
 }
 
@@ -35,6 +36,7 @@ type SearchableMultiSelectProps = {
   placeholder: string
   searchPlaceholder: string
   disabled?: boolean
+  onSearchChange?: (value: string) => void
   onChange: (value: string[]) => void
 }
 
@@ -44,11 +46,22 @@ export function SearchableSelect({
   placeholder,
   searchPlaceholder,
   disabled,
+  onSearchChange,
   onChange,
 }: SearchableSelectProps) {
   const [search, setSearch] = useState("")
   const selectedOption = options.find((option) => option.value === value)
   const filteredOptions = useFilteredOptions(options, search)
+
+  useEffect(() => {
+    if (!onSearchChange) return
+
+    const timeoutId = window.setTimeout(() => {
+      onSearchChange(search.trim())
+    }, 400)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [onSearchChange, search])
 
   return (
     <DropdownMenu>
@@ -99,11 +112,22 @@ export function SearchableMultiSelect({
   placeholder,
   searchPlaceholder,
   disabled,
+  onSearchChange,
   onChange,
 }: SearchableMultiSelectProps) {
   const [search, setSearch] = useState("")
   const filteredOptions = useFilteredOptions(options, search)
   const selectedOptions = options.filter((option) => value.includes(option.value))
+
+  useEffect(() => {
+    if (!onSearchChange) return
+
+    const timeoutId = window.setTimeout(() => {
+      onSearchChange(search.trim())
+    }, 400)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [onSearchChange, search])
 
   const toggleOption = (optionValue: string, checked: boolean) => {
     onChange(

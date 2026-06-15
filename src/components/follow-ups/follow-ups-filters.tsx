@@ -2,44 +2,30 @@
 
 import { RotateCcw, Search } from "lucide-react"
 
-import {
-  followUpStatusLabels,
-  followUpStatuses,
-} from "@/components/follow-ups/follow-ups.constants"
 import { SearchableSelect } from "@/components/leads/lead-searchable-select"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import type { Employee } from "@/types/employee"
-import type { FollowUpStatus } from "@/types/follow-up"
 
 type FollowUpsFiltersProps = {
   searchDraft: string
-  status: FollowUpStatus | "all"
   assigneeId: string
   employees: Employee[]
   isLoadingEmployees: boolean
   onSearchDraftChange: (value: string) => void
-  onStatusChange: (value: FollowUpStatus | "all") => void
   onAssigneeChange: (value: string) => void
+  onAssigneeSearchChange: (value: string) => void
   onReset: () => void
 }
 
 export function FollowUpsFilters({
   searchDraft,
-  status,
   assigneeId,
   employees,
   isLoadingEmployees,
   onSearchDraftChange,
-  onStatusChange,
   onAssigneeChange,
+  onAssigneeSearchChange,
   onReset,
 }: FollowUpsFiltersProps) {
   const assigneeOptions = [
@@ -71,6 +57,7 @@ export function FollowUpsFilters({
             placeholder={isLoadingEmployees ? "Loading assignees" : "All assignees"}
             searchPlaceholder="Search employees..."
             disabled={isLoadingEmployees}
+            onSearchChange={onAssigneeSearchChange}
             onChange={onAssigneeChange}
           />
         </div>

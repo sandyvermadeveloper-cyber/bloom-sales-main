@@ -79,6 +79,8 @@ type LeadDialogProps = {
   sources: LeadSource[]
   services: Service[]
   isLoadingOptions: boolean
+  onSourceSearchChange?: (value: string) => void
+  onServiceSearchChange?: (value: string) => void
   onOpenChange: (open: boolean) => void
   onSubmit: (values: LeadFormValues) => void
 }
@@ -92,6 +94,8 @@ export function LeadDialog({
   sources,
   services,
   isLoadingOptions,
+  onSourceSearchChange,
+  onServiceSearchChange,
   onOpenChange,
   onSubmit,
 }: LeadDialogProps) {
@@ -231,6 +235,7 @@ export function LeadDialog({
                         placeholder={isLoadingOptions ? "Loading sources" : "Select source"}
                         searchPlaceholder="Search sources..."
                         disabled={isPending || isLoadingOptions}
+                        onSearchChange={onSourceSearchChange}
                         onChange={field.onChange}
                       />
                     </FormControl>
@@ -423,6 +428,7 @@ export function LeadDialog({
                         placeholder={isLoadingOptions ? "Loading services" : "Select services"}
                         searchPlaceholder="Search services..."
                         disabled={isPending || isLoadingOptions}
+                        onSearchChange={onServiceSearchChange}
                         onChange={field.onChange}
                       />
                     </FormControl>

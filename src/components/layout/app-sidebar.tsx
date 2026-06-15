@@ -54,11 +54,11 @@ const navigationItems: SidebarNavItem[] = [
     href: "/lead-sources",
     icon: MapPin,
   },
-  {
-    title: "Buyouter",
-    href: "/buyouter",
-    icon: ShoppingBag,
-  },
+  // {
+  //   title: "Buyouter",
+  //   href: "/buyouter",
+  //   icon: ShoppingBag,
+  // },
   {
     title: "Settings",
     icon: Settings,

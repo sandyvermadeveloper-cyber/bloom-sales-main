@@ -71,6 +71,8 @@ function LeadsPageContent() {
   const [restoreLead, setRestoreLead] = useState<Lead | null>(null)
   const [dialogMessage, setDialogMessage] = useState<string | null>(null)
   const [pageMessage, setPageMessage] = useState<string | null>(null)
+  const [sourceSearch, setSourceSearch] = useState("")
+  const [serviceSearch, setServiceSearch] = useState("")
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
       const nextSearch = normalizeLeadSearch(searchDraft)
@@ -119,20 +121,25 @@ function LeadsPageContent() {
   )
 
   const leadsQuery = useQuery({
-    queryKey: ["leads", query],
+    queryKey: ["leads", page, limit, search, status, priority, qualification, sourceId, serviceId],
     queryFn: () => leadsApi.list(query),
     placeholderData: keepPreviousData,
+    staleTime: 30 * 1000,
   })
 
   const sourcesQuery = useQuery({
-    queryKey: ["lead-sources", "lead-form-options"],
-    queryFn: () => leadSourcesApi.list({ page: 1, limit: 100 }),
+    queryKey: ["lead-sources", "lead-form-options", sourceSearch],
+    queryFn: () => leadSourcesApi.list({ page: 1, limit: 20, search: sourceSearch || undefined }),
+    enabled: sourceSearch.length >= 2,
+    placeholderData: keepPreviousData,
     staleTime: 5 * 60 * 1000,
   })
 
   const servicesQuery = useQuery({
-    queryKey: ["services", "lead-form-options"],
-    queryFn: () => servicesApi.list({ page: 1, limit: 100 }),
+    queryKey: ["services", "lead-form-options", serviceSearch],
+    queryFn: () => servicesApi.list({ page: 1, limit: 20, search: serviceSearch || undefined }),
+    enabled: createOpen && serviceSearch.length >= 2,
+    placeholderData: keepPreviousData,
     staleTime: 5 * 60 * 1000,
   })
 
@@ -291,6 +298,8 @@ function LeadsPageContent() {
     setQualification("all")
     setSourceId("all")
     setServiceId("all")
+    setSourceSearch("")
+    setServiceSearch("")
   }
 
   const resetDialogState = () => {
@@ -301,12 +310,15 @@ function LeadsPageContent() {
   const openCreateDialog = () => {
     createMutation.reset()
     resetDialogState()
+    setSourceSearch("")
+    setServiceSearch("")
     setCreateOpen(true)
   }
 
   const openEditDialog = (lead: Lead) => {
     updateMutation.reset()
     resetDialogState()
+    setSourceSearch("")
     setEditLead(lead)
   }
 
@@ -415,9 +427,7 @@ function LeadsPageContent() {
             priority={priority}
             qualification={qualification}
             sourceId={sourceId}
-            serviceId={serviceId}
             sources={sources}
-            services={services}
             isLoadingOptions={isLoadingOptions}
             onSearchDraftChange={setSearchDraft}
             onStatusChange={(nextStatus) => {
@@ -436,10 +446,7 @@ function LeadsPageContent() {
               setPage(1)
               setSourceId(nextSourceId)
             }}
-            onServiceChange={(nextServiceId) => {
-              setPage(1)
-              setServiceId(nextServiceId)
-            }}
+            onSourceSearchChange={setSourceSearch}
             onReset={resetFilters}
           />
 
@@ -478,6 +485,8 @@ function LeadsPageContent() {
         sources={sources}
         services={services}
         isLoadingOptions={isLoadingOptions}
+        onSourceSearchChange={setSourceSearch}
+        onServiceSearchChange={setServiceSearch}
         onOpenChange={closeCreateDialog}
         onSubmit={(values) => {
           setDialogMessage(null)
@@ -494,6 +503,7 @@ function LeadsPageContent() {
         optionsMessage={optionsMessage}
         sources={sources}
         isLoadingOptions={isLoadingOptions}
+        onSourceSearchChange={setSourceSearch}
         onOpenChange={closeEditDialog}
         onSubmit={(values) => {
           setDialogMessage(null)

@@ -1,7 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   Calendar,
   Eye,
@@ -1025,10 +1025,12 @@ function AddCustomerContactDialog({
   const [isPrimary, setIsPrimary] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
+  const [contactSearch, setContactSearch] = useState("")
   const contactsQuery = useQuery({
-    queryKey: ["contacts", "customer-detail-options"],
-    queryFn: () => contactsApi.list({ page: 1, limit: 100 }),
-    enabled: open,
+    queryKey: ["contacts", "customer-detail-options", contactSearch],
+    queryFn: () => contactsApi.list({ page: 1, limit: 20, search: contactSearch || undefined }),
+    enabled: open && !createOpen && contactSearch.length >= 2,
+    placeholderData: keepPreviousData,
     staleTime: 5 * 60 * 1000,
   })
   const contactOptions = useMemo(
@@ -1056,6 +1058,7 @@ function AddCustomerContactDialog({
     if (!open) return
     const timeoutId = window.setTimeout(() => {
       setContactId("")
+      setContactSearch("")
       setIsPrimary(false)
       setMessage(null)
       setCreateOpen(false)
@@ -1092,6 +1095,7 @@ function AddCustomerContactDialog({
               placeholder={contactsQuery.isLoading ? "Loading contacts" : "Select contact"}
               searchPlaceholder="Search contacts..."
               disabled={contactsQuery.isLoading || mutation.isPending}
+              onSearchChange={setContactSearch}
               onChange={setContactId}
             />
             <p className="text-xs text-muted-foreground">

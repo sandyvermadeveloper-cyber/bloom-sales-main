@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2 } from "lucide-react"
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
 import { useQuery } from "@tanstack/react-query"
 
@@ -58,6 +58,7 @@ export function CustomerAssignDialog({
   onOpenChange,
   onSubmit,
 }: CustomerAssignDialogProps) {
+  const [employeeSearch, setEmployeeSearch] = useState("")
   const form = useForm<CustomerAssignFormValues>({
     resolver: zodResolver(customerAssignSchema),
     defaultValues: defaultAssignValues,
@@ -74,9 +75,9 @@ export function CustomerAssignDialog({
   }, [error, form])
 
   const employeesQuery = useQuery({
-    queryKey: ["admin-employees", "customer-assign-options"],
-    queryFn: () => adminEmployeesApi.list({ page: 1, limit: 100 }),
-    enabled: open,
+    queryKey: ["admin-employees", "customer-assign-options", employeeSearch],
+    queryFn: () => adminEmployeesApi.list({ page: 1, limit: 20, search: employeeSearch || undefined }),
+    enabled: open && employeeSearch.length >= 2,
     staleTime: 5 * 60 * 1000,
   })
 
@@ -90,7 +91,13 @@ export function CustomerAssignDialog({
   )
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) setEmployeeSearch("")
+        onOpenChange(nextOpen)
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Assign customer</DialogTitle>
@@ -116,6 +123,7 @@ export function CustomerAssignDialog({
                       placeholder={employeesQuery.isLoading ? "Loading employees" : "Select employee"}
                       searchPlaceholder="Search employees..."
                       disabled={isPending || employeesQuery.isLoading}
+                      onSearchChange={setEmployeeSearch}
                       onChange={field.onChange}
                     />
                   </FormControl>

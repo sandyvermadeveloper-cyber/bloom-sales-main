@@ -12,6 +12,7 @@ import {
   leadQualificationLabels,
   leadUpdateFields,
 } from "@/components/leads/leads.constants"
+import { SearchableSelect } from "@/components/leads/lead-searchable-select"
 import { leadToUpdateFormValues } from "@/components/leads/leads.utils"
 import { Alert } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -67,6 +68,7 @@ type LeadEditDialogProps = {
   optionsMessage: string | null
   sources: LeadSource[]
   isLoadingOptions: boolean
+  onSourceSearchChange: (value: string) => void
   onOpenChange: (open: boolean) => void
   onSubmit: (values: LeadUpdateFormValues) => void
 }
@@ -80,6 +82,7 @@ export function LeadEditDialog({
   optionsMessage,
   sources,
   isLoadingOptions,
+  onSourceSearchChange,
   onOpenChange,
   onSubmit,
 }: LeadEditDialogProps) {
@@ -106,6 +109,23 @@ export function LeadEditDialog({
   useEffect(() => {
     applyApiFieldErrors(error, form, leadUpdateFields)
   }, [error, form])
+
+  const sourceOptions = [
+    ...(lead?.source
+      ? [
+          {
+            value: lead.source.id,
+            label: lead.source.label || lead.source.name || lead.source.id,
+          },
+        ]
+      : []),
+    ...sources
+      .filter((source) => source.id !== lead?.source?.id)
+      .map((source) => ({
+        value: source.id,
+        label: source.label || source.name || source.id,
+      })),
+  ]
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -152,20 +172,17 @@ export function LeadEditDialog({
                             Source
                           </span>
                         </FormLabel>
-                        <Select disabled={isPending || isLoadingOptions} value={field.value} onValueChange={field.onChange}>
-                          <FormControl>
-                            <SelectTrigger className="h-9 w-full bg-background">
-                              <SelectValue placeholder={isLoadingOptions ? "Loading sources" : "Select source"} />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {sources.map((source) => (
-                              <SelectItem key={source.id} value={source.id}>
-                                {source.label || source.name || source.id}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <FormControl>
+                          <SearchableSelect
+                            value={field.value}
+                            options={sourceOptions}
+                            placeholder={isLoadingOptions ? "Loading sources" : "Select source"}
+                            searchPlaceholder="Search sources..."
+                            disabled={isPending || isLoadingOptions}
+                            onSearchChange={onSourceSearchChange}
+                            onChange={field.onChange}
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}

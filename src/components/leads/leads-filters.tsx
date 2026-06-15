@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { SearchableSelect } from "@/components/leads/lead-searchable-select"
 import {
   leadPriorities,
   leadPriorityLabels,
@@ -21,7 +22,6 @@ import {
 } from "@/components/leads/leads.constants"
 import type { LeadPriority, LeadQualification, LeadStatus } from "@/types/lead"
 import type { LeadSource } from "@/types/lead-source"
-import type { Service } from "@/types/service"
 
 type LeadsFiltersProps = {
   searchDraft: string
@@ -29,16 +29,14 @@ type LeadsFiltersProps = {
   priority: LeadPriority | "all"
   qualification: LeadQualification | "all"
   sourceId: string
-  serviceId: string
   sources: LeadSource[]
-  services: Service[]
   isLoadingOptions: boolean
   onSearchDraftChange: (value: string) => void
   onStatusChange: (value: LeadStatus | "all") => void
   onPriorityChange: (value: LeadPriority | "all") => void
   onQualificationChange: (value: LeadQualification | "all") => void
   onSourceChange: (value: string) => void
-  onServiceChange: (value: string) => void
+  onSourceSearchChange: (value: string) => void
   onReset: () => void
 }
 
@@ -48,27 +46,32 @@ export function LeadsFilters({
   priority,
   qualification,
   sourceId,
-  serviceId,
   sources,
-  services,
   isLoadingOptions,
   onSearchDraftChange,
   onStatusChange,
   onPriorityChange,
   onQualificationChange,
   onSourceChange,
-  onServiceChange,
+  onSourceSearchChange,
   onReset,
 }: LeadsFiltersProps) {
+  const sourceOptions = [
+    { value: "all", label: "All sources" },
+    ...sources.map((source) => ({
+      value: source.id,
+      label: source.label || source.name || source.id,
+    })),
+  ]
+
   return (
     <div
       className="
          grid grid-cols-2 gap-3
     md:grid-cols-5
-    lg:grid-cols-6
       "
     >
-      <div className="relative col-span-2 md:col-span-5 lg:col-span-6">
+      <div className="relative col-span-2 md:col-span-5 ">
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={searchDraft}
@@ -77,6 +80,19 @@ export function LeadsFilters({
           aria-label="Search leads"
           className="h-10 pl-9"
         />
+      </div>
+
+{/* Mobile me full row, Tablet/Desktop me normal */}
+  <div className="col-span-2 md:col-span-1">
+       <SearchableSelect
+        value={sourceId}
+        options={sourceOptions}
+        placeholder="All sources"
+        searchPlaceholder="Lead sources..."
+        disabled={isLoadingOptions}
+        onSearchChange={onSourceSearchChange}
+        onChange={onSourceChange}
+      />
       </div>
 
       <Select value={status} onValueChange={(value) => onStatusChange(value as LeadStatus | "all")}>
@@ -124,19 +140,7 @@ export function LeadsFilters({
         </SelectContent>
       </Select>
 
-      <Select value={sourceId} onValueChange={onSourceChange} disabled={isLoadingOptions}>
-        <SelectTrigger className="h-10 w-full">
-          <SelectValue placeholder="Source" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All sources</SelectItem>
-          {sources.map((source) => (
-            <SelectItem key={source.id} value={source.id}>
-              {source.label || source.name || source.id}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+     
 
       <Button
         type="button"

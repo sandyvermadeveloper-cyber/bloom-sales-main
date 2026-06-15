@@ -74,6 +74,7 @@ export function CustomerDialog({
   const [contactDialogOpen, setContactDialogOpen] = useState(false)
   const [contactSearchDraft, setContactSearchDraft] = useState("")
   const [contactSearch, setContactSearch] = useState("")
+  const [employeeSearch, setEmployeeSearch] = useState("")
   const [selectedContacts, setSelectedContacts] = useState<Contact[]>([])
   const form = useForm<CustomerFormValues>({
     resolver: zodResolver(customerSchema),
@@ -90,6 +91,7 @@ export function CustomerDialog({
       setSelectedContacts([])
       setContactSearchDraft("")
       setContactSearch("")
+      setEmployeeSearch("")
     }, 0)
 
     return () => window.clearTimeout(timeoutId)
@@ -108,9 +110,9 @@ export function CustomerDialog({
   }, [contactSearchDraft])
 
   const employeesQuery = useQuery({
-    queryKey: ["admin-employees", "customer-form-options"],
-    queryFn: () => adminEmployeesApi.list({ page: 1, limit: 100 }),
-    enabled: open,
+    queryKey: ["admin-employees", "customer-form-options", employeeSearch],
+    queryFn: () => adminEmployeesApi.list({ page: 1, limit: 20, search: employeeSearch || undefined }),
+    enabled: open && employeeSearch.length >= 2,
     staleTime: 5 * 60 * 1000,
   })
 
@@ -222,6 +224,7 @@ export function CustomerDialog({
                         placeholder={employeesQuery.isLoading ? "Loading employees" : "Select employee"}
                         searchPlaceholder="Search employees..."
                         disabled={isPending || employeesQuery.isLoading}
+                        onSearchChange={setEmployeeSearch}
                         onChange={field.onChange}
                       />
                     </FormControl>

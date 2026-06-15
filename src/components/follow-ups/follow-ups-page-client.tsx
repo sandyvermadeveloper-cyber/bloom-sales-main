@@ -79,6 +79,7 @@ function FollowUpsPageContent() {
   const [dialogMessage, setDialogMessage] = useState<string | null>(null)
   const [pageMessage, setPageMessage] = useState<string | null>(null)
   const [leadSearch, setLeadSearch] = useState("")
+  const [employeeSearch, setEmployeeSearch] = useState("")
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -139,14 +140,17 @@ function FollowUpsPageContent() {
   })
 
   const employeesQuery = useQuery({
-    queryKey: ["employees", "follow-up-options"],
-    queryFn: () => adminEmployeesApi.list({ page: 1, limit: 100 }),
+    queryKey: ["employees", "follow-up-options", employeeSearch],
+    queryFn: () => adminEmployeesApi.list({ page: 1, limit: 20, search: employeeSearch || undefined }),
+    enabled: employeeSearch.length >= 2,
+    placeholderData: keepPreviousData,
     staleTime: 5 * 60 * 1000,
   })
 
   const leadsQuery = useQuery({
     queryKey: ["leads", "follow-up-options", leadSearch],
     queryFn: () => leadsApi.list({ page: 1, limit: 20, search: leadSearch || undefined }),
+    enabled: createOpen && leadSearch.length >= 2,
     staleTime: 60 * 1000,
   })
 
@@ -320,6 +324,7 @@ function FollowUpsPageContent() {
     createMutation.reset()
     resetDialogState()
     setLeadSearch("")
+    setEmployeeSearch("")
     setCreateOpen(true)
   }
 
@@ -475,19 +480,15 @@ function FollowUpsPageContent() {
 
           <FollowUpsFilters
             searchDraft={searchDraft}
-            status={status}
             assigneeId={assigneeId}
             employees={employees}
             isLoadingEmployees={employeesQuery.isLoading}
             onSearchDraftChange={setSearchDraft}
-            onStatusChange={(nextStatus) => {
-              setPage(1)
-              setStatus(nextStatus)
-            }}
             onAssigneeChange={(nextAssigneeId) => {
               setPage(1)
               setAssigneeId(nextAssigneeId)
             }}
+            onAssigneeSearchChange={setEmployeeSearch}
             onReset={resetFilters}
           />
 
@@ -529,6 +530,7 @@ function FollowUpsPageContent() {
         onLeadSearchChange={setLeadSearch}
         employees={employees}
         isLoadingEmployees={employeesQuery.isLoading}
+        onEmployeeSearchChange={setEmployeeSearch}
         onOpenChange={closeCreateDialog}
         onSubmit={(values) => {
           setDialogMessage(null)
@@ -544,6 +546,7 @@ function FollowUpsPageContent() {
         message={dialogMessage}
         employees={employees}
         isLoadingEmployees={employeesQuery.isLoading}
+        onEmployeeSearchChange={setEmployeeSearch}
         onOpenChange={closeEditDialog}
         onSubmit={(values) => {
           setDialogMessage(null)
@@ -567,6 +570,7 @@ function FollowUpsPageContent() {
         message={dialogMessage}
         employees={employees}
         isLoadingEmployees={employeesQuery.isLoading}
+        onEmployeeSearchChange={setEmployeeSearch}
         onOpenChange={closeAssignDialog}
         onSubmit={(values) => {
           setDialogMessage(null)

@@ -1,7 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   Calendar,
   CalendarClock,
@@ -171,6 +171,7 @@ export function LeadDetailDialog({ leadId, open, onOpenChange }: LeadDetailDialo
   const [reopenFollowUp, setReopenFollowUp] = useState<FollowUp | null>(null)
   const [missedFollowUp, setMissedFollowUp] = useState<FollowUp | null>(null)
   const [followUpMessage, setFollowUpMessage] = useState<string | null>(null)
+  const [employeeSearch, setEmployeeSearch] = useState("")
 
   const detailQuery = useQuery({
     queryKey: ["leads", "detail", leadId],
@@ -206,9 +207,10 @@ export function LeadDetailDialog({ leadId, open, onOpenChange }: LeadDetailDialo
     enabled: open && Boolean(leadId),
   })
   const employeesQuery = useQuery({
-    queryKey: ["employees", "follow-up-options"],
-    queryFn: () => adminEmployeesApi.list({ page: 1, limit: 100 }),
-    enabled: open,
+    queryKey: ["employees", "follow-up-options", employeeSearch],
+    queryFn: () => adminEmployeesApi.list({ page: 1, limit: 20, search: employeeSearch || undefined }),
+    enabled: open && employeeSearch.length >= 2,
+    placeholderData: keepPreviousData,
     staleTime: 5 * 60 * 1000,
   })
   const lead = detailQuery.data?.data ?? null
@@ -355,6 +357,7 @@ export function LeadDetailDialog({ leadId, open, onOpenChange }: LeadDetailDialo
   const openFollowUpDialog = () => {
     createFollowUpMutation.reset()
     setFollowUpMessage(null)
+    setEmployeeSearch("")
     setFollowUpOpen(true)
   }
 
@@ -664,6 +667,7 @@ export function LeadDetailDialog({ leadId, open, onOpenChange }: LeadDetailDialo
           leadLabel={lead ? getLeadTitle(lead) : undefined}
           employees={employees}
           isLoadingEmployees={employeesQuery.isLoading}
+          onEmployeeSearchChange={setEmployeeSearch}
           onOpenChange={closeFollowUpDialog}
           onSubmit={(values) => {
             setFollowUpMessage(null)
@@ -678,6 +682,7 @@ export function LeadDetailDialog({ leadId, open, onOpenChange }: LeadDetailDialo
           message={followUpMessage}
           employees={employees}
           isLoadingEmployees={employeesQuery.isLoading}
+          onEmployeeSearchChange={setEmployeeSearch}
           onOpenChange={closeEditFollowUpDialog}
           onSubmit={(values) => {
             setFollowUpMessage(null)
@@ -699,6 +704,7 @@ export function LeadDetailDialog({ leadId, open, onOpenChange }: LeadDetailDialo
           message={followUpMessage}
           employees={employees}
           isLoadingEmployees={employeesQuery.isLoading}
+          onEmployeeSearchChange={setEmployeeSearch}
           onOpenChange={closeAssignFollowUpDialog}
           onSubmit={(values) => {
             setFollowUpMessage(null)
@@ -1345,11 +1351,13 @@ function AddLeadServiceDialog({
   onSuccess: () => void
 }) {
   const [serviceId, setServiceId] = useState("")
+  const [serviceSearch, setServiceSearch] = useState("")
   const [message, setMessage] = useState<string | null>(null)
   const servicesQuery = useQuery({
-    queryKey: ["services", "lead-detail-options"],
-    queryFn: () => servicesApi.list({ page: 1, limit: 100 }),
-    enabled: open,
+    queryKey: ["services", "lead-detail-options", serviceSearch],
+    queryFn: () => servicesApi.list({ page: 1, limit: 20, search: serviceSearch || undefined }),
+    enabled: open && serviceSearch.length >= 2,
+    placeholderData: keepPreviousData,
     staleTime: 5 * 60 * 1000,
   })
   const serviceOptions = useMemo(
@@ -1376,6 +1384,7 @@ function AddLeadServiceDialog({
     if (!open) return
     const timeoutId = window.setTimeout(() => {
       setServiceId("")
+      setServiceSearch("")
       setMessage(null)
     }, 0)
 
@@ -1397,6 +1406,7 @@ function AddLeadServiceDialog({
             placeholder={servicesQuery.isLoading ? "Loading services" : "Select service"}
             searchPlaceholder="Search services..."
             disabled={servicesQuery.isLoading || mutation.isPending}
+            onSearchChange={setServiceSearch}
             onChange={setServiceId}
           />
         </div>
@@ -1908,10 +1918,12 @@ function AddLeadContactDialog({
   const [isPrimary, setIsPrimary] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
+  const [contactSearch, setContactSearch] = useState("")
   const contactsQuery = useQuery({
-    queryKey: ["contacts", "lead-detail-options"],
-    queryFn: () => contactsApi.list({ page: 1, limit: 100 }),
-    enabled: open,
+    queryKey: ["contacts", "lead-detail-options", contactSearch],
+    queryFn: () => contactsApi.list({ page: 1, limit: 20, search: contactSearch || undefined }),
+    enabled: open && !createOpen && contactSearch.length >= 2,
+    placeholderData: keepPreviousData,
     staleTime: 5 * 60 * 1000,
   })
   const contactOptions = useMemo(
@@ -1939,6 +1951,7 @@ function AddLeadContactDialog({
     if (!open) return
     const timeoutId = window.setTimeout(() => {
       setContactId("")
+      setContactSearch("")
       setIsPrimary(false)
       setMessage(null)
       setCreateOpen(false)
@@ -1975,6 +1988,7 @@ function AddLeadContactDialog({
               placeholder={contactsQuery.isLoading ? "Loading contacts" : "Select contact"}
               searchPlaceholder="Search contacts..."
               disabled={contactsQuery.isLoading || mutation.isPending}
+              onSearchChange={setContactSearch}
               onChange={setContactId}
             />
             <p className="text-xs text-muted-foreground">
