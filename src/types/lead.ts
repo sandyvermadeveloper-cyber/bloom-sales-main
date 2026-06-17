@@ -140,6 +140,19 @@ export type LeadConvertInput = {
   customerType: CustomerType
 }
 
+export type LeadAssignInput = {
+  employeeId: string
+  reason: string
+}
+
+export type LeadAssignment = {
+  id: string
+  reason?: string | null
+  assignedBy?: LeadOwner | null
+  assignedTo?: LeadOwner | null
+  assignedAt?: string
+}
+
 export type LeadActivity = {
   id: string
   type: string

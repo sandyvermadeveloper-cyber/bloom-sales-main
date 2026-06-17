@@ -4,6 +4,8 @@ import type {
   CreateLeadInput,
   Lead,
   LeadActivity,
+  LeadAssignInput,
+  LeadAssignment,
   LeadAttachment,
   LeadAttachmentInput,
   LeadConvertInput,
@@ -35,13 +37,14 @@ type ResourceListResponseData<T> =
       notes?: T[]
       attachments?: T[]
       activities?: T[]
+      assignments?: T[]
       pagination?: unknown
     }
 
 const normalizeResourceList = <T>(data: ResourceListResponseData<T>): T[] => {
   if (Array.isArray(data)) return data
 
-  return data.items ?? data.notes ?? data.attachments ?? data.activities ?? []
+  return data.items ?? data.notes ?? data.attachments ?? data.activities ?? data.assignments ?? []
 }
 
 const normalizeLeadsList = (
@@ -173,6 +176,32 @@ export const leadsApi = {
     )
 
     return response.data
+  },
+
+  async assign(leadId: string, input: LeadAssignInput) {
+    const response = await apiClient.post<ApiSuccess<LeadData>>(
+      `/api/v1/leads/${leadId}/assign`,
+      input
+    )
+
+    return response.data
+  },
+
+  async assignments(leadId: string) {
+    const response = await apiClient.get<ApiSuccess<ResourceListResponseData<LeadAssignment>>>(
+      `/api/v1/leads/${leadId}/assignments`,
+      {
+        params: {
+          page: 1,
+          limit: 20,
+        },
+      }
+    )
+
+    return {
+      ...response.data,
+      data: normalizeResourceList(response.data.data),
+    } satisfies ApiSuccess<LeadAssignment[]>
   },
 
   async activities(leadId: string) {

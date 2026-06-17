@@ -19,6 +19,7 @@ import {
   Plus,
   Trash2,
   Users,
+  UserCog,
   UserMinus,
   UserRound,
   WalletCards,
@@ -124,10 +125,13 @@ import type {
   FollowUpRescheduleFormValues,
   FollowUpUpdateFormValues,
 } from "@/schemas/follow-up.schemas"
+import { leadAssignSchema, type LeadAssignFormValues } from "@/schemas/lead.schemas"
+import type { Employee } from "@/types/employee"
 import type { FollowUp } from "@/types/follow-up"
 import type {
   Lead,
   LeadActivity,
+  LeadAssignment,
   LeadAttachment,
   LeadContact,
   LeadNewContactLinkInput,
@@ -142,6 +146,9 @@ import {
   formatPhoneNumber,
   formatTitleCase,
 } from "@/utils/display-format"
+import { applyApiFieldErrors } from "@/utils/form-errors"
+
+const leadAssignFields = ["employeeId", "reason"] as const
 
 type LeadDetailDialogProps = {
   leadId: string | null
@@ -161,6 +168,8 @@ export function LeadDetailDialog({ leadId, open, onOpenChange }: LeadDetailDialo
   const [addContactOpen, setAddContactOpen] = useState(false)
   const [editContact, setEditContact] = useState<LeadContact | null>(null)
   const [removeContactTarget, setRemoveContactTarget] = useState<LeadContact | null>(null)
+  const [assignLeadOpen, setAssignLeadOpen] = useState(false)
+  const [assignLeadMessage, setAssignLeadMessage] = useState<string | null>(null)
   const [followUpOpen, setFollowUpOpen] = useState(false)
   const [editFollowUp, setEditFollowUp] = useState<FollowUp | null>(null)
   const [viewFollowUp, setViewFollowUp] = useState<FollowUp | null>(null)
@@ -206,6 +215,11 @@ export function LeadDetailDialog({ leadId, open, onOpenChange }: LeadDetailDialo
       }),
     enabled: open && Boolean(leadId),
   })
+  const assignmentsQuery = useQuery({
+    queryKey: ["leads", "assignments", leadId],
+    queryFn: () => leadsApi.assignments(leadId as string),
+    enabled: open && Boolean(leadId),
+  })
   const employeesQuery = useQuery({
     queryKey: ["employees", "follow-up-options", employeeSearch],
     queryFn: () => adminEmployeesApi.list({ page: 1, limit: 20, search: employeeSearch || undefined }),
@@ -234,6 +248,25 @@ export function LeadDetailDialog({ leadId, open, onOpenChange }: LeadDetailDialo
     void queryClient.invalidateQueries({ queryKey: ["leads", "follow-ups", leadId] })
     void queryClient.invalidateQueries({ queryKey: ["follow-ups"] })
   }
+  const invalidateAssignments = () => {
+    void queryClient.invalidateQueries({ queryKey: ["leads", "assignments", leadId] })
+  }
+
+  const assignLeadMutation = useMutation({
+    mutationFn: (values: LeadAssignFormValues) => {
+      if (!leadId) throw new Error("Lead is required to assign.")
+
+      return leadsApi.assign(leadId, values)
+    },
+    onSuccess: () => {
+      setAssignLeadOpen(false)
+      setAssignLeadMessage(null)
+      invalidateDetail()
+      invalidateAssignments()
+      invalidateActivities()
+    },
+    onError: (error) => setAssignLeadMessage(getLeadApiMessage(error, "Unable to assign lead.")),
+  })
 
   const createFollowUpMutation = useMutation({
     mutationFn: (values: FollowUpFormValues) => followUpsApi.create(followUpFormToCreateInput(values)),
@@ -498,6 +531,19 @@ export function LeadDetailDialog({ leadId, open, onOpenChange }: LeadDetailDialo
                 onRemove={setRemoveContactTarget}
               />
               <LeadServicesCard lead={lead} onAdd={() => setServiceOpen(true)} />
+              <LeadAssignmentsCard
+                assignments={assignmentsQuery.data?.data ?? []}
+                isLoading={assignmentsQuery.isLoading}
+                isError={assignmentsQuery.isError}
+                error={assignmentsQuery.error}
+                onRetry={() => assignmentsQuery.refetch()}
+                onAssign={() => {
+                  assignLeadMutation.reset()
+                  setAssignLeadMessage(null)
+                  setEmployeeSearch("")
+                  setAssignLeadOpen(true)
+                }}
+              />
               <LeadFollowUpsCard
                 followUps={followUps}
                 isLoading={followUpsQuery.isLoading}
@@ -656,6 +702,26 @@ export function LeadDetailDialog({ leadId, open, onOpenChange }: LeadDetailDialo
             invalidateDetail()
             invalidateActivities()
             invalidateContacts()
+          }}
+        />
+        <LeadAssignDialog
+          open={assignLeadOpen}
+          lead={lead}
+          employees={employees}
+          isLoadingEmployees={employeesQuery.isLoading}
+          isPending={assignLeadMutation.isPending}
+          error={assignLeadMutation.error}
+          message={assignLeadMessage}
+          onEmployeeSearchChange={setEmployeeSearch}
+          onOpenChange={(nextOpen) => {
+            if (nextOpen || assignLeadMutation.isPending) return
+            setAssignLeadOpen(false)
+            setAssignLeadMessage(null)
+            setEmployeeSearch("")
+          }}
+          onSubmit={(values) => {
+            setAssignLeadMessage(null)
+            assignLeadMutation.mutate(values)
           }}
         />
         <FollowUpDialog
@@ -925,6 +991,67 @@ function LeadServicesCard({ lead, onAdd }: { lead: Lead; onAdd: () => void }) {
       ) : (
         <EmptyText>No services linked.</EmptyText>
       )}
+    </DetailSection>
+  )
+}
+
+function LeadAssignmentsCard({
+  assignments,
+  isLoading,
+  isError,
+  error,
+  onRetry,
+  onAssign,
+}: {
+  assignments: LeadAssignment[]
+  isLoading: boolean
+  isError: boolean
+  error: unknown
+  onRetry: () => void
+  onAssign: () => void
+}) {
+  return (
+    <DetailSection title="Assignment History" actionLabel="Assign Lead" onAdd={onAssign}>
+      <SectionState
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        fallback="Unable to load assignment history."
+        onRetry={onRetry}
+      />
+      {!isLoading && !isError && assignments.length ? (
+        <div className="space-y-2">
+          {assignments.map((assignment) => (
+            <div
+              key={assignment.id}
+              className="flex items-start gap-3 rounded-lg border border-border/70 bg-muted/30 p-3"
+            >
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <UserCog className="size-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">
+                  {formatDisplayName(assignment.assignedTo?.name || "Unassigned")}
+                </p>
+                {assignment.reason ? (
+                  <p className="line-clamp-2 break-words text-xs text-muted-foreground">
+                    {formatDescription(assignment.reason)}
+                  </p>
+                ) : null}
+                <p className="mt-0.5 break-words text-xs text-muted-foreground">
+                  {[
+                    assignment.assignedBy?.name ? `By ${formatDisplayName(assignment.assignedBy.name)}` : null,
+                    formatLeadDate(assignment.assignedAt),
+                  ]
+                    .filter(Boolean)
+                    .join(" - ")}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {!isLoading && !isError && !assignments.length ? <EmptyText>No assignment history.</EmptyText> : null}
     </DetailSection>
   )
 }
@@ -1334,6 +1461,129 @@ function DetailSection({
       </div>
       {children}
     </section>
+  )
+}
+
+function LeadAssignDialog({
+  open,
+  lead,
+  employees,
+  isLoadingEmployees,
+  isPending,
+  error,
+  message,
+  onEmployeeSearchChange,
+  onOpenChange,
+  onSubmit,
+}: {
+  open: boolean
+  lead: Lead | null
+  employees: Employee[]
+  isLoadingEmployees: boolean
+  isPending: boolean
+  error: unknown
+  message: string | null
+  onEmployeeSearchChange: (value: string) => void
+  onOpenChange: (open: boolean) => void
+  onSubmit: (values: LeadAssignFormValues) => void
+}) {
+  const form = useForm<LeadAssignFormValues>({
+    resolver: zodResolver(leadAssignSchema),
+    defaultValues: {
+      employeeId: "",
+      reason: "",
+    },
+  })
+
+  useEffect(() => {
+    if (!open) return
+    form.clearErrors()
+    form.reset({
+      employeeId: "",
+      reason: "",
+    })
+  }, [form, open])
+
+  useEffect(() => {
+    applyApiFieldErrors(error, form, leadAssignFields)
+  }, [error, form])
+
+  const employeeOptions = useMemo(
+    () =>
+      employees.map((employee) => ({
+        value: employee.id,
+        label:
+          employee.displayName ||
+          `${employee.firstName ?? ""} ${employee.lastName ?? ""}`.trim() ||
+          employee.email ||
+          employee.id,
+      })),
+    [employees]
+  )
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Assign Lead</DialogTitle>
+          <DialogDescription>
+            Assign {lead ? getLeadTitle(lead) : "this lead"} to a team member.
+          </DialogDescription>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)} noValidate>
+            {message ? <Alert variant="destructive">{message}</Alert> : null}
+
+            <FormField
+              control={form.control}
+              name="employeeId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Employee</FormLabel>
+                  <FormControl className="mt-2">
+                    <SearchableSelect
+                      value={field.value}
+                      options={employeeOptions}
+                      placeholder={isLoadingEmployees ? "Loading employees" : "Select employee"}
+                      searchPlaceholder="Search employees..."
+                      disabled={isPending || isLoadingEmployees}
+                      onSearchChange={onEmployeeSearchChange}
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="reason"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Reason</FormLabel>
+                  <FormControl className="mt-2">
+                    <Textarea placeholder="Why is this lead being assigned?" disabled={isPending} rows={3} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <DialogFooter>
+              <Button type="button" variant="outline" disabled={isPending} onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isPending}>
+                {isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+                Assign Lead
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   )
 }
 

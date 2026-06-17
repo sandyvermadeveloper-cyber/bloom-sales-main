@@ -93,3 +93,10 @@ export const leadConvertSchema = z.object({
 })
 
 export type LeadConvertFormValues = z.infer<typeof leadConvertSchema>
+
+export const leadAssignSchema = z.object({
+  employeeId: z.string().trim().min(1, "Select an employee"),
+  reason: z.string().trim().min(1, "Reason is required"),
+})
+
+export type LeadAssignFormValues = z.infer<typeof leadAssignSchema>
