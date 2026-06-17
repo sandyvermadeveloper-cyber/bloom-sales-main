@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import type { ReactNode } from "react"
 import { useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import {
@@ -14,6 +15,17 @@ import {
   Users,
   XCircle,
 } from "lucide-react"
+import {
+  Bar,
+  BarChart,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip as RechartsTooltip,
+  XAxis,
+  YAxis,
+} from "recharts"
 
 import { dashboardApi } from "@/api/dashboard.api"
 import {
@@ -45,7 +57,6 @@ import { Alert } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/auth.store"
@@ -64,6 +75,8 @@ import {
 
 const toIsoStartOfDay = (value: string) => (value ? new Date(`${value}T00:00:00.000`).toISOString() : undefined)
 const toIsoEndOfDay = (value: string) => (value ? new Date(`${value}T23:59:59.999`).toISOString() : undefined)
+const chartColors = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"] as const
+const chartDotClasses = ["bg-chart-1", "bg-chart-2", "bg-chart-3", "bg-chart-4", "bg-chart-5"] as const
 
 export function DashboardPageClient() {
   const employee = useAuthStore((state) => state.employee)
@@ -150,6 +163,21 @@ export function DashboardPageClient() {
 
       <SummaryGrid summary={dashboard?.summary} isLoading={dashboardQuery.isLoading} />
 
+      <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+        <KpiChartCard summary={dashboard?.summary} isLoading={dashboardQuery.isLoading} />
+        <FollowUpSplitChartCard
+          summary={dashboard?.summary}
+          todayCount={dashboard?.todayFollowUps.length ?? 0}
+          upcomingCount={dashboard?.upcomingFollowUps.length ?? 0}
+          isLoading={dashboardQuery.isLoading}
+        />
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-2">
+        <LeadStatusChartCard leads={dashboard?.recentLeads ?? []} isLoading={dashboardQuery.isLoading} />
+        <LeadPriorityChartCard leads={dashboard?.recentLeads ?? []} isLoading={dashboardQuery.isLoading} />
+      </div>
+
       <QuickActionsCard quickActions={dashboard?.quickActions} isLoading={dashboardQuery.isLoading} />
 
       <div className="grid gap-4 xl:grid-cols-2">
@@ -229,6 +257,160 @@ function SummaryGrid({ summary, isLoading }: { summary?: DashboardSummary; isLoa
         </Card>
       ))}
     </div>
+  )
+}
+
+function KpiChartCard({ summary, isLoading }: { summary?: DashboardSummary; isLoading: boolean }) {
+  const data = [
+    { label: "Today", value: summary?.todayFollowUpsCount ?? 0, fill: chartColors[0] },
+    { label: "Overdue", value: summary?.overdueFollowUpsCount ?? 0, fill: chartColors[1] },
+    { label: "New Leads", value: summary?.newLeadsCount ?? 0, fill: chartColors[2] },
+    { label: "Customers", value: summary?.activeCustomersCount ?? 0, fill: chartColors[3] },
+  ]
+
+  return (
+    <ChartCard title="KPI Snapshot" description="A quick visual comparison of core dashboard metrics.">
+      {isLoading ? (
+        <ChartSkeleton />
+      ) : hasChartData(data) ? (
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data} margin={{ top: 8, right: 8, left: -24, bottom: 0 }}>
+              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
+              <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
+              <RechartsTooltip cursor={{ fill: "var(--muted)" }} content={<ChartTooltip />} />
+              <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                {data.map((item) => (
+                  <Cell key={item.label} fill={item.fill} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      ) : (
+        <ChartEmptyState title="No KPI activity yet" description="Dashboard metrics will appear once data is available." />
+      )}
+    </ChartCard>
+  )
+}
+
+function FollowUpSplitChartCard({
+  summary,
+  todayCount,
+  upcomingCount,
+  isLoading,
+}: {
+  summary?: DashboardSummary
+  todayCount: number
+  upcomingCount: number
+  isLoading: boolean
+}) {
+  const data = [
+    { label: "Today", value: summary?.todayFollowUpsCount ?? todayCount, fill: chartColors[0], colorClass: chartDotClasses[0] },
+    { label: "Upcoming", value: upcomingCount, fill: chartColors[2], colorClass: chartDotClasses[2] },
+    { label: "Overdue", value: summary?.overdueFollowUpsCount ?? 0, fill: chartColors[1], colorClass: chartDotClasses[1] },
+  ]
+
+  return (
+    <ChartCard title="Follow-Up Split" description="Today, upcoming, and overdue follow-up workload.">
+      {isLoading ? (
+        <ChartSkeleton />
+      ) : hasChartData(data) ? (
+        <div className="grid gap-4 sm:grid-cols-[220px_1fr] sm:items-center">
+          <div className="h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={data} dataKey="value" nameKey="label" innerRadius={58} outerRadius={86} paddingAngle={4}>
+                  {data.map((item) => (
+                    <Cell key={item.label} fill={item.fill} />
+                  ))}
+                </Pie>
+                <RechartsTooltip content={<ChartTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <ChartLegend data={data} />
+        </div>
+      ) : (
+        <ChartEmptyState title="No follow-up split yet" description="Follow-up counts will appear as work is scheduled." />
+      )}
+    </ChartCard>
+  )
+}
+
+function LeadStatusChartCard({ leads, isLoading }: { leads: Lead[]; isLoading: boolean }) {
+  const data = countLeadField(leads, "status").map((item, index) => ({
+    ...item,
+    label: getLeadStatusLabel(item.key),
+    fill: chartColors[index % chartColors.length],
+    colorClass: chartDotClasses[index % chartDotClasses.length],
+  }))
+
+  return (
+    <ChartCard title="Recent Leads by Status" description="Status distribution from the latest leads returned by dashboard.">
+      {isLoading ? (
+        <ChartSkeleton />
+      ) : hasChartData(data) ? (
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data} layout="vertical" margin={{ top: 8, right: 16, left: 12, bottom: 0 }}>
+              <XAxis type="number" allowDecimals={false} axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
+              <YAxis
+                type="category"
+                dataKey="label"
+                width={96}
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12 }}
+              />
+              <RechartsTooltip cursor={{ fill: "var(--muted)" }} content={<ChartTooltip />} />
+              <Bar dataKey="value" radius={[0, 8, 8, 0]}>
+                {data.map((item) => (
+                  <Cell key={item.key} fill={item.fill} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      ) : (
+        <ChartEmptyState title="No status data" description="Recent lead status counts will appear here." />
+      )}
+    </ChartCard>
+  )
+}
+
+function LeadPriorityChartCard({ leads, isLoading }: { leads: Lead[]; isLoading: boolean }) {
+  const data = countLeadField(leads, "priority").map((item, index) => ({
+    ...item,
+    label: getLeadPriorityLabel(item.key),
+    fill: chartColors[(index + 2) % chartColors.length],
+    colorClass: chartDotClasses[(index + 2) % chartDotClasses.length],
+  }))
+
+  return (
+    <ChartCard title="Recent Leads by Priority" description="Priority mix for the latest lead activity.">
+      {isLoading ? (
+        <ChartSkeleton />
+      ) : hasChartData(data) ? (
+        <div className="grid gap-4 sm:grid-cols-[220px_1fr] sm:items-center">
+          <div className="h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={data} dataKey="value" nameKey="label" innerRadius={52} outerRadius={84} paddingAngle={4}>
+                  {data.map((item) => (
+                    <Cell key={item.key} fill={item.fill} />
+                  ))}
+                </Pie>
+                <RechartsTooltip content={<ChartTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <ChartLegend data={data} />
+        </div>
+      ) : (
+        <ChartEmptyState title="No priority data" description="Recent lead priority counts will appear here." />
+      )}
+    </ChartCard>
   )
 }
 
@@ -314,6 +496,107 @@ function QuickActionsCard({
       </CardContent>
     </Card>
   )
+}
+
+function ChartCard({
+  title,
+  description,
+  children,
+}: {
+  title: string
+  description: string
+  children: ReactNode
+}) {
+  return (
+    <Card className="overflow-hidden">
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <p className="text-sm text-muted-foreground">{description}</p>
+      </CardHeader>
+      <CardContent>{children}</CardContent>
+    </Card>
+  )
+}
+
+function ChartSkeleton() {
+  return (
+    <div className="space-y-3">
+      <Skeleton className="h-48 w-full rounded-xl" />
+      <div className="grid gap-2 sm:grid-cols-3">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-full" />
+      </div>
+    </div>
+  )
+}
+
+function ChartEmptyState({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="flex min-h-56 items-center justify-center rounded-xl border border-dashed border-border bg-muted/20 p-6 text-center">
+      <div>
+        <XCircle className="mx-auto size-8 text-muted-foreground" />
+        <p className="mt-3 text-sm font-medium">{title}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+      </div>
+    </div>
+  )
+}
+
+function ChartLegend({ data }: { data: Array<{ label: string; value: number; colorClass: string }> }) {
+  return (
+    <div className="space-y-2">
+      {data.map((item) => (
+        <div key={item.label} className="flex items-center justify-between gap-3 rounded-lg bg-muted/30 px-3 py-2 text-sm">
+          <span className="flex min-w-0 items-center gap-2">
+            <span className={cn("size-2.5 shrink-0 rounded-full", item.colorClass)} />
+            <span className="truncate text-muted-foreground">{item.label}</span>
+          </span>
+          <span className="font-semibold text-foreground">{item.value}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function ChartTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean
+  label?: string | number
+  payload?: Array<{ name?: string; value?: number; payload?: { label?: string } }>
+}) {
+  if (!active || !payload?.length) return null
+
+  const item = payload[0]
+  const title = item.payload?.label ?? label ?? item.name ?? "Value"
+
+  return (
+    <div className="rounded-lg border border-border bg-popover px-3 py-2 text-sm shadow-md">
+      <p className="font-medium text-popover-foreground">{title}</p>
+      <p className="text-muted-foreground">{item.value ?? 0}</p>
+    </div>
+  )
+}
+
+function hasChartData(data: Array<{ value: number }>) {
+  return data.some((item) => item.value > 0)
+}
+
+function countLeadField(leads: Lead[], field: "status" | "priority") {
+  const counts = new Map<string, number>()
+
+  leads.forEach((lead) => {
+    const value = lead[field]
+
+    if (!value) return
+
+    counts.set(value, (counts.get(value) ?? 0) + 1)
+  })
+
+  return Array.from(counts.entries()).map(([key, value]) => ({ key, value }))
 }
 
 function FollowUpsCard({

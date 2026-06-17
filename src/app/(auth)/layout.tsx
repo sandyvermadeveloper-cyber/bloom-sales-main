@@ -146,6 +146,7 @@ import { useEffect, type ReactNode } from "react"
 
 import { authRoutes } from "@/constants/auth-routes"
 import { useAuthStore } from "@/stores/auth.store"
+import Image from "next/image"
 
 const features = [
   {
@@ -267,9 +268,9 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             }}
           />
 
-          <div className="relative flex h-full flex-col overflow-y-auto px-8 py-8 lg:px-10">
+          <div className="relative flex h-full flex-col overflow-y-auto px-8 py-8 lg:px-10 ">
             {/* Logo */}
-            <div className="flex flex-shrink-0 items-center gap-3">
+            {/* <div className="flex flex-shrink-0 items-center gap-3">
               <div className="relative">
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary to-primary/50 blur-md opacity-50 transition-opacity group-hover:opacity-70" />
                 <div className="relative flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 text-sm font-bold text-primary-foreground shadow-md lg:size-11 lg:text-base">
@@ -280,7 +281,16 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                 <p className="text-sm font-semibold tracking-tight text-foreground lg:text-base">Bloom Sales</p>
                 <p className="text-xs text-muted-foreground/70">Secure Admin Portal</p>
               </div>
-            </div>
+            </div> */}
+            <div className="relative h-22 w-42 bg-[#070114] rounded-2xl">
+    <Image
+      src="/logo.png"
+      alt="Bloom Sales"
+      fill
+      className="object-contain"
+      priority
+    />
+  </div>
 
             {/* Content - centered vertically */}
             <div className="flex flex-1 flex-col justify-center py-8">
@@ -339,7 +349,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           </div>
 
           {/* Mobile logo */}
-          <div className="mb-10 flex flex-shrink-0 items-center gap-4 lg:hidden">
+          {/* <div className="mb-10 flex flex-shrink-0 items-center gap-4 lg:hidden">
             <div className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-xl font-bold text-primary-foreground shadow-lg">
               B
             </div>
@@ -347,7 +357,18 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
               <p className="text-lg font-semibold tracking-tight text-foreground">Bloom Sales</p>
               <p className="text-sm text-muted-foreground">Secure Admin Portal</p>
             </div>
-          </div>
+          </div> */}
+          <div className="mb-5 flex flex-shrink-0  items-center gap-4 lg:hidden">
+          <div className="relative h-22 w-52 bg-[#070114] rounded-2xl">
+    <Image
+      src="/logo.png"
+      alt="Bloom Sales"
+      fill
+      className="object-contain"
+      priority
+    />
+  </div>
+  </div>
 
           {/* Form container */}
           <div className="w-full max-w-md px-4">

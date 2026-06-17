@@ -7,6 +7,7 @@ import { memo } from "react"
 import { Button } from "@/components/ui/button"
 import { SidebarItem, type SidebarNavItem } from "@/components/layout/sidebar-item"
 import { cn } from "@/lib/utils"
+import Image from "next/image"
 
 const navigationItems: SidebarNavItem[] = [
   {
@@ -90,7 +91,7 @@ function AppSidebarComponent({ isCollapsed = false, onNavigate, className }: App
       )}
       aria-label="Primary navigation"
     >
-      <div className="flex h-16 shrink-0 items-center border-b border-sidebar-border px-4">
+      {/* <div className="flex h-16 shrink-0 items-center border-b border-sidebar-border px-4">
         <Button
           asChild
           variant="ghost"
@@ -107,6 +108,37 @@ function AppSidebarComponent({ isCollapsed = false, onNavigate, className }: App
                 <span className="mt-1 block truncate text-xs text-muted-foreground">Admin Panel</span>
               </span>
             ) : null}
+          </Link>
+        </Button>
+      </div> */}
+      <div className="flex h-16 shrink-0 items-center border-b border-sidebar-border px-4">
+        <Button
+          asChild
+          variant="ghost"
+          className={cn("h-15 w-full justify-start gap-3 bg-[#070114] hover:bg-[#070114] px-2", isCollapsed && "justify-center px-0")}  
+          aria-label="Bloom Sales dashboard"
+        >
+          {/* <Link href="/" onClick={onNavigate}>
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground">
+              B
+            </span>
+            {!isCollapsed ? (
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-semibold leading-none">Bloom Sales</span>
+                <span className="mt-1 block truncate text-xs text-muted-foreground">Admin Panel</span>
+              </span>
+            ) : null}
+          </Link> */}
+          <Link href="/" onClick={onNavigate} className="flex items-center justify-center">
+            <div className="relative h-22 w-46">
+              <Image
+                src="/logo.png"
+                alt="Bloom Sales"
+                fill
+                className="object-contain"
+                priority
+              />
+            </div>
           </Link>
         </Button>
       </div>
