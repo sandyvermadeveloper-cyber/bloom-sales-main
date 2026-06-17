@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ?? ""
-const publicRoutes = ["/login", "/login/verify", "/forgot-password", "/reset-password"]
+const deepLinkRoutes = ["/invite", "/reset-password"]
+const publicRoutes = ["/login", "/login/verify", "/forgot-password", "/admin-reset-password"]
 
 const isRoute = (pathname: string, routes: string[]) =>
   routes.some((route) => pathname === route || (route !== "/" && pathname.startsWith(`${route}/`)))
@@ -61,6 +62,10 @@ export default async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl
 
   if (pathname.startsWith("/api/") || pathname.startsWith("/.well-known/")) {
+    return NextResponse.next()
+  }
+
+  if (isRoute(pathname, deepLinkRoutes)) {
     return NextResponse.next()
   }
 

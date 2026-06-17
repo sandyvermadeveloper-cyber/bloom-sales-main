@@ -5,6 +5,7 @@ const publicRoutes = new Set<string>([
   authRoutes.loginVerify,
   authRoutes.forgotPassword,
   authRoutes.resetPassword,
+  authRoutes.mobileResetPassword,
 ])
 
 const isSafeInternalPath = (value: string) =>

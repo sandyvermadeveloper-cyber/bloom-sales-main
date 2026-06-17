@@ -6,7 +6,7 @@ type ResetPasswordPageProps = {
   }>
 }
 
-export default async function ResetPasswordPage({ searchParams }: ResetPasswordPageProps) {
+export default async function AdminResetPasswordPage({ searchParams }: ResetPasswordPageProps) {
   const params = await searchParams
   const token = Array.isArray(params.token) ? params.token[0] : params.token
 
