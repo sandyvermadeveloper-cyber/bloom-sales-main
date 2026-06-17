@@ -84,7 +84,7 @@ export function FollowUpConfirmDialog({
 
         {showReason ? (
           <div>
-            <Label htmlFor="follow-up-confirm-reason">Reason (optional)</Label>
+            <Label htmlFor="follow-up-confirm-reason">Reason</Label>
             <Textarea
               id="follow-up-confirm-reason"
               value={reason}

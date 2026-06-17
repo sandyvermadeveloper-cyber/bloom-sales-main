@@ -63,10 +63,10 @@ const navigationItems: SidebarNavItem[] = [
     title: "Settings",
     icon: Settings,
     items: [
-      {
-        title: "Account",
-        href: "/settings/account",
-      },
+      // {
+      //   title: "Account",
+      //   href: "/settings/account",
+      // },
       {
         title: "Security",
         href: "/settings/security",

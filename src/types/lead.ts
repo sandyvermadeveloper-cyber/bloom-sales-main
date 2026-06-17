@@ -39,6 +39,10 @@ export type Lead = {
   budgetMin?: number | null
   budgetMax?: number | null
   expectedClosingDate?: string | null
+  lossReason?: string | null
+  customLossReason?: string | null
+  convertedAt?: string | null
+  closedAt?: string | null
   owner?: LeadOwner | null
   source?: Pick<LeadSource, "id" | "label" | "name"> | null
   primaryContact?: LeadContact | null

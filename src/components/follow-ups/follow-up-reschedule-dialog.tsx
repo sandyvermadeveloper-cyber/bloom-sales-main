@@ -104,7 +104,7 @@ export function FollowUpRescheduleDialog({
               name="reason"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Reason (optional)</FormLabel>
+                  <FormLabel>Reason</FormLabel>
                   <FormControl className="mt-2">
                     <Textarea placeholder="Add a reason for rescheduling" rows={3} disabled={isPending} {...field} />
                   </FormControl>
