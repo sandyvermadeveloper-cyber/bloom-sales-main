@@ -1,6 +1,6 @@
 "use client"
 
-import { BookUser, Building2, CalendarClock, LayoutDashboard, MapPin, Settings, ShoppingBag, Target, User, Users, Wrench } from "lucide-react"
+import { BookUser, Building2, CalendarClock, LayoutDashboard, MapPin, Settings, Target, User, Users, Wrench } from "lucide-react"
 import Link from "next/link"
 import { memo } from "react"
 

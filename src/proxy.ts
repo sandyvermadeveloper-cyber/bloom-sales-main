@@ -22,6 +22,27 @@ const appendSetCookieHeaders = (response: NextResponse, source: Response) => {
   }
 }
 
+const clearAdminAuthCookies = (response: NextResponse) => {
+  for (const name of ["access_token", "admin_access_token", "refresh_token", "admin_refresh_token"]) {
+    response.cookies.set(name, "", {
+      path: "/",
+      maxAge: 0,
+      expires: new Date(0),
+    })
+  }
+}
+
+const redirectToLogin = (request: NextRequest, pathname: string, search: string) => {
+  const loginUrl = new URL("/login", request.url)
+  if (pathname !== "/") {
+    loginUrl.searchParams.set("redirect", `${pathname}${search}`)
+  }
+
+  const response = NextResponse.redirect(loginUrl)
+  clearAdminAuthCookies(response)
+  return response
+}
+
 const refreshAdminSession = async (request: NextRequest) => {
   if (!apiUrl) return null
 
@@ -48,10 +69,6 @@ export default async function proxy(request: NextRequest) {
   const hasRefresh = hasAdminRefreshCookie(request)
 
   if (isPublicRoute) {
-    if (hasAccess) {
-      return NextResponse.redirect(new URL("/", request.url))
-    }
-
     if (hasRefresh) {
       const refreshResponse = await refreshAdminSession(request)
 
@@ -60,6 +77,14 @@ export default async function proxy(request: NextRequest) {
         appendSetCookieHeaders(response, refreshResponse)
         return response
       }
+
+      const response = NextResponse.next()
+      clearAdminAuthCookies(response)
+      return response
+    }
+
+    if (hasAccess) {
+      return NextResponse.redirect(new URL("/", request.url))
     }
 
     return NextResponse.next()
@@ -77,13 +102,11 @@ export default async function proxy(request: NextRequest) {
       appendSetCookieHeaders(response, refreshResponse)
       return response
     }
+
+    return redirectToLogin(request, pathname, search)
   }
 
-  const loginUrl = new URL("/login", request.url)
-  if (pathname !== "/") {
-    loginUrl.searchParams.set("redirect", `${pathname}${search}`)
-  }
-  return NextResponse.redirect(loginUrl)
+  return redirectToLogin(request, pathname, search)
 }
 
 export const config = {

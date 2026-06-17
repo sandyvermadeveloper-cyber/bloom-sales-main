@@ -13,6 +13,7 @@ const refreshableAuthCodes = new Set([
 ])
 
 let refreshRequest: Promise<void> | null = null
+let isHandlingAuthFailure = false
 
 const getValidationErrorMessage = (
   message: string,
@@ -71,6 +72,8 @@ const refreshAdminSession = async () => {
 
 const clearClientAuthState = () => {
   if (typeof window === "undefined") return
+  if (isHandlingAuthFailure) return
+  isHandlingAuthFailure = true
 
   void import("@/stores/auth.store").then(({ useAuthStore }) => {
     useAuthStore.getState().clearSession()
@@ -102,6 +105,13 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest)
       } catch {
         clearClientAuthState()
+        throw new ApiClientError({
+          message: "Your session has expired. Please sign in again.",
+          code: "AUTHENTICATION_ERROR",
+          status: 401,
+          requestId: error.response?.data?.requestId,
+          fieldErrors: error.response?.data?.data?.errors,
+        })
       }
     }
 

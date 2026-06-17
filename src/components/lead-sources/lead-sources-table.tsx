@@ -22,6 +22,7 @@ import {
   getLeadSourceName,
 } from "@/components/lead-sources/lead-sources.utils"
 import type { LeadSource, LeadSourcesPagination } from "@/types/lead-source"
+import { Inbox } from "lucide-react"
 
 type LeadSourcesTableProps = {
   leadSources: LeadSource[]
@@ -97,8 +98,15 @@ export function LeadSourcesTable({
 
             {!isLoading && leadSources.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                  No lead sources found.
+                <TableCell colSpan={8} className="h-64 text-center">
+                  <div className="flex flex-col items-center justify-center gap-3">
+                    <div className="rounded-full bg-muted/50 p-4">
+                      <Inbox className="size-8 text-muted-foreground/50" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">No Lead Sources found</p>
+                    </div>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : null}

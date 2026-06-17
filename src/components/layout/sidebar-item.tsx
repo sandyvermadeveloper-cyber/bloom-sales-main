@@ -59,9 +59,10 @@ function SidebarItemComponent({ item, isCollapsed = false, onNavigate }: Sidebar
   )
 
   const itemClassName = cn(
-    "h-10 w-full justify-start gap-3 px-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+    "h-10 w-full justify-start gap-3 rounded-lg px-3 text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent hover:text-sidebar-foreground dark:hover:bg-sidebar-accent dark:hover:text-sidebar-foreground",
     isCollapsed && "justify-center px-0",
-    isActive && "bg-sidebar-accent text-sidebar-accent-foreground"
+    isActive &&
+    "bg-primary text-primary-foreground shadow-sm hover:bg-primary hover:text-primary-foreground dark:hover:bg-primary dark:hover:text-primary-foreground"
   )
 
   if (hasChildren) {
@@ -98,7 +99,7 @@ function SidebarItemComponent({ item, isCollapsed = false, onNavigate }: Sidebar
         )}
 
         {!isCollapsed && isOpen ? (
-          <div className="space-y-1 pl-7">
+          <div className="ml-5 space-y-1 border-l border-sidebar-border pl-3">
             {item.items?.map((child) => {
               const childActive = pathname === child.href || pathname.startsWith(`${child.href}/`)
 
@@ -108,8 +109,8 @@ function SidebarItemComponent({ item, isCollapsed = false, onNavigate }: Sidebar
                   asChild
                   variant="ghost"
                   className={cn(
-                    "h-9 w-full justify-start px-3 text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                    childActive && "bg-sidebar-accent text-sidebar-accent-foreground"
+                    "h-9 w-full justify-start rounded-lg px-3 text-sm text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent hover:text-sidebar-foreground dark:hover:bg-sidebar-accent dark:hover:text-sidebar-foreground",
+                    childActive && "bg-sidebar-accent font-medium text-sidebar-foreground"
                   )}
                 >
                   <Link href={child.href} onClick={onNavigate}>

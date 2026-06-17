@@ -21,6 +21,7 @@ import {
 } from "@/components/contacts/contacts.utils"
 import type { Contact, ContactsPagination } from "@/types/contact"
 import { formatDesignation, formatEmail, formatPhoneNumber } from "@/utils/display-format"
+import { Inbox } from "lucide-react"
 
 type ContactsTableProps = {
   contacts: Contact[]
@@ -104,8 +105,15 @@ export function ContactsTable({
 
             {!isLoading && contacts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
-                  No contacts found.
+                <TableCell colSpan={8} className="h-64 text-center">
+                  <div className="flex flex-col items-center justify-center gap-3">
+                    <div className="rounded-full bg-muted/50 p-4">
+                      <Inbox className="size-8 text-muted-foreground/50" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">No Contacts found</p>
+                    </div>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : null}

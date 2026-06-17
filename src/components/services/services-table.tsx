@@ -22,6 +22,7 @@ import {
   getServiceName,
 } from "@/components/services/services.utils"
 import type { Service, ServicesPagination } from "@/types/service"
+import { Inbox } from "lucide-react"
 
 type ServicesTableProps = {
   services: Service[]
@@ -97,8 +98,15 @@ export function ServicesTable({
 
             {!isLoading && services.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                  No services found.
+                <TableCell colSpan={8} className="h-64 text-center">
+                  <div className="flex flex-col items-center justify-center gap-3">
+                    <div className="rounded-full bg-muted/50 p-4">
+                      <Inbox className="size-8 text-muted-foreground/50" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">No Services found</p>
+                    </div>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : null}
