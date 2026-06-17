@@ -27,11 +27,12 @@ export function DeepLinkRedirect({
 }: DeepLinkRedirectProps) {
   const searchParams = useSearchParams()
   const token = searchParams.get("token")?.trim() ?? ""
+  const queryString = searchParams.toString()
   const [showFallback, setShowFallback] = useState(false)
 
   const deepLink = useMemo(
-    () => (token ? `bloomsales://auth/${deepLinkPath}?token=${encodeURIComponent(token)}` : ""),
-    [deepLinkPath, token]
+    () => (token && queryString ? `bloomsales://auth/${deepLinkPath}?${queryString}` : ""),
+    [deepLinkPath, queryString, token]
   )
 
   useEffect(() => {
