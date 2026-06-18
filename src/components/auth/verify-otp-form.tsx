@@ -69,12 +69,11 @@ export function VerifyOtpForm() {
       if (!challenge) throw new Error("Missing login challenge")
       return adminAuthApi.verifyOtp({ challengeId: challenge.challengeId, otp: values.otp })
     },
-    onSuccess: async (response) => {
+    onSuccess: (response) => {
       isCompletingLoginRef.current = true
       setEmployee(response.data.employee)
       setLoginChallenge(null)
-      router.refresh()
-      router.replace(getRedirectPath())
+      window.location.replace(getRedirectPath())
     },
     onError: (error) => {
       if (error instanceof ApiClientError) {

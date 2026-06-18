@@ -2,7 +2,6 @@
 
 import axios, { AxiosError, type AxiosRequestConfig } from "axios"
 
-import { env } from "@/config/env"
 import type { ApiErrorBody } from "@/types/api"
 import { getLoginPathWithRedirect } from "@/utils/auth-redirect"
 
@@ -52,7 +51,7 @@ export class ApiClientError extends Error {
 }
 
 export const apiClient = axios.create({
-  baseURL: env.apiUrl,
+  baseURL: "",
   withCredentials: true,
   headers: {
     Accept: "application/json",
