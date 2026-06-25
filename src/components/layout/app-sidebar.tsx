@@ -26,33 +26,33 @@ const navigationItems: SidebarNavItem[] = [
     icon: Users,
   },
   {
-    title: "Leads",
-    href: "/leads",
+    title: "CRM Leads",
+    href: "/crm/crm-leads",
     icon: Target,
   },
   {
     title: "Follow-Ups",
-    href: "/follow-ups",
+    href: "/crm/follow-ups",
     icon: CalendarClock,
   },
   {
     title: "Contacts",
-    href: "/contacts",
+    href: "/crm/contacts",
     icon: BookUser,
   },
   {
     title: "Customers",
-    href: "/customers",
+    href: "/crm/customers",
     icon: Building2,
   },
   {
     title: "Services",
-    href: "/services",
+    href: "/crm/services",
     icon: Wrench,
   },
   {
     title: "Lead Sources",
-    href: "/lead-sources",
+    href: "/crm/lead-sources",
     icon: MapPin,
   },
   // {

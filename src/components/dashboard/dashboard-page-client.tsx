@@ -31,18 +31,18 @@ import { dashboardApi } from "@/api/dashboard.api"
 import {
   followUpStatusBadgeClasses,
   followUpTypeBadgeClasses,
-} from "@/components/follow-ups/follow-ups.constants"
+} from "@/components/crm/follow-ups/follow-ups.constants"
 import {
   formatFollowUpDateTime,
   getFollowUpAssigneeName,
   getFollowUpStatusLabel,
   getFollowUpTypeLabel,
-} from "@/components/follow-ups/follow-ups.utils"
+} from "@/components/crm/follow-ups/follow-ups.utils"
 import {
   leadPriorityBadgeClasses,
   leadQualificationBadgeClasses,
   leadStatusBadgeClasses,
-} from "@/components/leads/leads.constants"
+} from "@/components/crm/leads/leads.constants"
 import {
   formatLeadDate,
   getLeadOwnerName,
@@ -51,7 +51,7 @@ import {
   getLeadSourceName,
   getLeadStatusLabel,
   getLeadTitle,
-} from "@/components/leads/leads.utils"
+} from "@/components/crm/leads/leads.utils"
 import { TableRefetchButton } from "@/components/shared/table-refetch-button"
 import { Alert } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -109,7 +109,7 @@ export function DashboardPageClient() {
               Welcome{employee?.firstName ? `, ${formatDisplayName(employee.firstName)}` : ""}
             </h1>
             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-              Monitor today&apos;s follow-ups, new leads, active customers, and high-priority sales work.
+              Monitor today&apos;s follow-ups, new CRM leads, active customers, and high-priority sales work.
             </p>
           </div>
 
@@ -216,10 +216,10 @@ function SummaryGrid({ summary, isLoading }: { summary?: DashboardSummary; isLoa
       danger: true,
     },
     {
-      label: "New Leads",
+      label: "New CRM Leads",
       value: summary?.newLeadsCount,
       icon: Target,
-      hint: "Fresh leads in current scope",
+      hint: "Fresh CRM leads in current scope",
     },
     {
       label: "Active Customers",
@@ -264,7 +264,7 @@ function KpiChartCard({ summary, isLoading }: { summary?: DashboardSummary; isLo
   const data = [
     { label: "Today", value: summary?.todayFollowUpsCount ?? 0, fill: chartColors[0] },
     { label: "Overdue", value: summary?.overdueFollowUpsCount ?? 0, fill: chartColors[1] },
-    { label: "New Leads", value: summary?.newLeadsCount ?? 0, fill: chartColors[2] },
+    { label: "New CRM Leads", value: summary?.newLeadsCount ?? 0, fill: chartColors[2] },
     { label: "Customers", value: summary?.activeCustomersCount ?? 0, fill: chartColors[3] },
   ]
 
@@ -347,7 +347,7 @@ function LeadStatusChartCard({ leads, isLoading }: { leads: Lead[]; isLoading: b
   }))
 
   return (
-    <ChartCard title="Recent Leads by Status" description="Status distribution from the latest leads returned by dashboard.">
+    <ChartCard title="Recent CRM Leads by Status" description="Status distribution from the latest CRM leads returned by dashboard.">
       {isLoading ? (
         <ChartSkeleton />
       ) : hasChartData(data) ? (
@@ -388,7 +388,7 @@ function LeadPriorityChartCard({ leads, isLoading }: { leads: Lead[]; isLoading:
   }))
 
   return (
-    <ChartCard title="Recent Leads by Priority" description="Priority mix for the latest lead activity.">
+    <ChartCard title="Recent CRM Leads by Priority" description="Priority mix for the latest CRM lead activity.">
       {isLoading ? (
         <ChartSkeleton />
       ) : hasChartData(data) ? (
@@ -428,30 +428,30 @@ function QuickActionsCard({
 }) {
   const actions = [
     {
-      label: "Create Lead",
+      label: "Create CRM Lead",
       description: "Capture a new opportunity",
-      href: "/leads",
+      href: "/crm/crm-leads",
       enabled: quickActions?.canCreateLead,
       icon: Target,
     },
     {
       label: "Schedule Follow-Up",
       description: "Plan the next customer touch",
-      href: "/follow-ups",
+      href: "/crm/follow-ups",
       enabled: quickActions?.canCreateFollowUp,
       icon: CalendarClock,
     },
     {
       label: "Create Customer",
       description: "Open customer workspace",
-      href: "/customers",
+      href: "/crm/customers",
       enabled: quickActions?.canCreateCustomer,
       icon: Users,
     },
     {
       label: "Find Contact",
       description: "Search CRM contacts",
-      href: "/contacts",
+      href: "/crm/contacts",
       enabled: quickActions?.canFindContact,
       icon: Contact,
     },
@@ -728,11 +728,11 @@ function RecentLeadsCard({ leads, isLoading }: { leads: Lead[]; isLoading: boole
     <Card>
       <CardHeader className="flex gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <CardTitle>Recent Leads</CardTitle>
+          <CardTitle>Recent CRM Leads</CardTitle>
           <p className="text-sm text-muted-foreground">Latest CRM opportunities from your dashboard scope.</p>
         </div>
         <Button asChild variant="outline" size="sm">
-          <Link href="/leads">
+          <Link href="/crm/crm-leads">
             View all
             <ArrowRight className="size-4" />
           </Link>
@@ -750,7 +750,7 @@ function RecentLeadsCard({ leads, isLoading }: { leads: Lead[]; isLoading: boole
             ))}
           </div>
         ) : (
-          <EmptyState title="No recent leads" description="New leads will appear here." />
+          <EmptyState title="No recent CRM leads" description="New CRM leads will appear here." />
         )}
       </CardContent>
     </Card>

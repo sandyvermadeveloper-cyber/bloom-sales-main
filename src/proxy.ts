@@ -61,6 +61,12 @@ const refreshAdminSession = async (request: NextRequest) => {
 export default async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl
 
+  if (pathname.includes("//")) {
+    const normalizedUrl = request.nextUrl.clone()
+    normalizedUrl.pathname = pathname.replace(/\/{2,}/g, "/")
+    return NextResponse.redirect(normalizedUrl)
+  }
+
   if (pathname.startsWith("/api/") || pathname.startsWith("/.well-known/")) {
     return NextResponse.next()
   }

@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-import { followUpOutcomes, followUpTypes } from "@/components/follow-ups/follow-ups.constants"
+import { followUpOutcomes, followUpTypes } from "@/components/crm/follow-ups/follow-ups.constants"
 
 export const followUpSchema = z
   .object({

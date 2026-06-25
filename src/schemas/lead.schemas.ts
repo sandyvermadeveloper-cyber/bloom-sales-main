@@ -1,7 +1,7 @@
 import { z } from "zod"
 
-import { customerTypes } from "@/components/customers/customers.constants"
-import { leadPriorities, leadQualifications, leadStatuses } from "@/components/leads/leads.constants"
+import { customerTypes } from "@/components/crm/customers/customers.constants"
+import { leadPriorities, leadQualifications, leadStatuses } from "@/components/crm/leads/leads.constants"
 import { e164PhoneSchema } from "@/schemas/phone.schemas"
 
 const contactLabels = ["WORK", "PERSONAL"] as const
